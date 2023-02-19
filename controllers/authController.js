@@ -12,6 +12,11 @@ const handleLogin = async (req, res) => {
     const match = await bcrypt.compare(password, foundUser.password);
     if (match) {
         const roles = Object.values(foundUser.roles).filter(Boolean);
+        const id = foundUser.id;
+        const name = foundUser.name;
+        const surname = foundUser.surname;
+        const picture = foundUser.picture;
+        const studentNumber = foundUser.studentNumber;
         // create JWTs
         const accessToken = jwt.sign(
             {
@@ -21,7 +26,7 @@ const handleLogin = async (req, res) => {
                 }
             },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: '10s' }
+            { expiresIn: '1d' }
         );
         const refreshToken = jwt.sign(
             { "email": foundUser.email },
@@ -38,7 +43,7 @@ const handleLogin = async (req, res) => {
         res.cookie('jwt', refreshToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
         // Send authorization roles and access token to user
-        res.json({ roles, accessToken });
+        res.json({ id, name, surname, roles, studentNumber, accessToken, picture });
 
     } else {
         res.sendStatus(401);
