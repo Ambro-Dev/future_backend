@@ -5,7 +5,11 @@ const fs = require("fs");
 const path = require("path");
 
 const getAllUsers = async (req, res) => {
+<<<<<<< HEAD
   const users = await User.find().select("_id name surname studentNumber roles");;
+=======
+  const users = await User.find();
+>>>>>>> 919e70bf5b970d0cf19bb85c0ef80c61d64ef78a
   if (!users) return res.status(204).json({ message: "No users found" });
   res.json(users);
 };

@@ -56,12 +56,19 @@ app.use("/auth", require("./routes/auth"));
 app.use("/refresh", require("./routes/refresh"));
 app.use("/logout", require("./routes/logout"));
 
+
 app.use(verifyJWT);
+<<<<<<< HEAD
 app.use("/groups", require("./routes/api/groups"));
 app.use("/users", require("./routes/api/users"));
 app.use("/courses", require("./routes/api/courses"));
 app.use("/conversations", require("./routes/api/conversations"));
 app.use("/messages", require("./routes/api/messages"));
+=======
+app.use('/groups', require('./routes/api/groups'));
+app.use('/users', require('./routes/api/users'));
+app.use('/courses', require('./routes/api/courses'));
+>>>>>>> 919e70bf5b970d0cf19bb85c0ef80c61d64ef78a
 
 app.all("*", (req, res) => {
   res.status(404);
