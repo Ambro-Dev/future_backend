@@ -85,17 +85,16 @@ mongoose.connection.once("open", () => {
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
-  socket.on("load-messages", (data) => {
-    // Load messages for the current conversation and user
-    Message.find({
-      conversation: data.conversation,
-    })
-      .then((messages) => {
-        socket.emit("load-messages", messages);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+  Conversation.find({}, (err, conversations) => {
+    if (err) throw err;
+
+    socket.emit("conversationList", conversations);
+  });
+
+  User.find({}, (err, users) => {
+    if (err) throw err;
+
+    socket.emit("userList", users);
   });
 
   socket.on("create-conversation", (data) => {
@@ -115,17 +114,15 @@ io.on("connection", (socket) => {
       });
   });
 
-  socket.on("join-conversation", (data) => {
-    // Join the user to the conversation\
-    socket.join(data.conversation);
-    console.log(`User ${data.user} joined conversation ${data.conversation}`);
+  socket.on('join-conversation', ({ conversationId }) => {
+    socket.join(conversationId);
 
-    // Add the user to the conversation's user list
-    try {
-      socket.to(data.conversation).emit("user-joined", { user: data.user });
-    } catch (err) {
-      console.error(err);
-    }
+    // Send the messages in the conversation to the user
+    Message.find({ conversation: conversationId }, (err, messages) => {
+      if (err) throw err;
+
+      socket.emit('conversation-messages', messages);
+    });
   });
 
   socket.on("leave-conversation", (data) => {
@@ -147,7 +144,7 @@ io.on("connection", (socket) => {
       text: data.text,
     });
     message.save().then(() => {
-      socket.to(data.conversation).emit("message", message);
+      socket.to(data.conversation).emit("new-message", message);
     });
   });
 
