@@ -56,19 +56,12 @@ app.use("/auth", require("./routes/auth"));
 app.use("/refresh", require("./routes/refresh"));
 app.use("/logout", require("./routes/logout"));
 
-
 app.use(verifyJWT);
-<<<<<<< HEAD
 app.use("/groups", require("./routes/api/groups"));
 app.use("/users", require("./routes/api/users"));
 app.use("/courses", require("./routes/api/courses"));
 app.use("/conversations", require("./routes/api/conversations"));
 app.use("/messages", require("./routes/api/messages"));
-=======
-app.use('/groups', require('./routes/api/groups'));
-app.use('/users', require('./routes/api/users'));
-app.use('/courses', require('./routes/api/courses'));
->>>>>>> 919e70bf5b970d0cf19bb85c0ef80c61d64ef78a
 
 app.all("*", (req, res) => {
   res.status(404);
@@ -92,14 +85,10 @@ mongoose.connection.once("open", () => {
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
-  socket.on("search", async (query) => {
-    console.log(query);
-  });
-
   socket.on("load-messages", (data) => {
     // Load messages for the current conversation and user
     Message.find({
-      conversation: data.conversation
+      conversation: data.conversation,
     })
       .then((messages) => {
         socket.emit("load-messages", messages);
@@ -109,73 +98,57 @@ io.on("connection", (socket) => {
       });
   });
 
-  socket.on('create-conversation', (data) => {
+  socket.on("create-conversation", (data) => {
     // Create a new conversation conversation
     const conversation = new Conversation({
       name: data.name,
-      members: [data.creator]
-    });
-  
-    conversation.save().then(() => {
-      socket.emit('new-conversation', conversation);
-    }).catch((err) => {
-      console.error(err);
-    });
-  });
-
-  socket.on('join-conversation', (data) => {
-    // Join the user to the conversation
-    socket.join(data.conversation);
-  
-    // Add the user to the conversation's user list
-    Conversation.findOneAndUpdate({ _id: data.conversation }, { $addToSet: { users: data.userId } }).then(() => {
-      // Broadcast a message to all users in the conversation
-      socket.to(data.conversation).emit('user-joined', { userId: data.userId });
-    }).catch((err) => {
-      console.error(err);
-    });
-  });
-
-  socket.on('leave-conversation', (data) => {
-    // Remove the user from the conversation's user list
-    Conversation.findOneAndUpdate({ _id: data.conversation }, { $pull: { users: data.userId } }).then(() => {
-      // Broadcast a message to all users in the conversation
-      socket.to(data.conversation).emit('user-left', { userId: data.userId });
-    }).catch((err) => {
-      console.error(err);
-    });
-  
-    // Leave the user from the conversation
-    socket.leave(data.conversation);
-  });
-
-  socket.on('load-conversations', () => {
-    // Load the available conversation conversations
-    Conversation.find().then((conversations) => {
-      socket.emit('load-conversations', conversations);
-    }).catch((err) => {
-      console.error(err);
-    });
-  });
-
-  socket.on("send-message", (data) => {
-    // Save message to MongoDB
-    const message = new Message({
-      text: data.text,
-      sender: data.sender,
-      receiver: data.receiver,
-      conversation: data.conversation,
+      members: data.members,
     });
 
-    message
+    conversation
       .save()
       .then(() => {
-        // Broadcast message to all connected users
-        socket.to(data.conversation).emit("new-message", message);
+        socket.emit("new-conversation", conversation);
       })
       .catch((err) => {
         console.error(err);
       });
+  });
+
+  socket.on("join-conversation", (data) => {
+    // Join the user to the conversation\
+    socket.join(data.conversation);
+    console.log(`User ${data.user} joined conversation ${data.conversation}`);
+
+    // Add the user to the conversation's user list
+    try {
+      socket.to(data.conversation).emit("user-joined", { user: data.user });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  socket.on("leave-conversation", (data) => {
+    // Remove the user from the conversation's user list
+    console.log(`User ${data.user} left conversation ${data.conversation}`);
+    try {
+      socket.to(data.conversation).emit("user-left", { user: data.user });
+    } catch (err) {
+      console.error(err);
+    }
+    // Leave the user from the conversation
+    socket.leave(data.conversation);
+  });
+
+  socket.on("send-message", (data) => {
+    const message = new Message({
+      sender: data.sender,
+      conversation: data.conversation,
+      text: data.text,
+    });
+    message.save().then(() => {
+      socket.to(data.conversation).emit("message", message);
+    });
   });
 
   socket.on("receive-message", (data) => {

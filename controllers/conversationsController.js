@@ -1,5 +1,6 @@
 const Conversation = require('../model/Conversation');
 const Message = require('../model/Message');
+const User = require('../model/User');
 
 // Create a new conversation
 const createConversation =  async (req, res) => {
@@ -21,7 +22,7 @@ const getUserConversation =  async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const conversations = await Conversation.find({ $or: [{ user1: userId }, { user2: userId }] }).populate('user1 user2');
+    const conversations = await Conversation.find({members: req.params.id});
 
     res.json(conversations);
   } catch (err) {
@@ -43,25 +44,15 @@ const getAllConversations =  async (req, res) => {
 };
 
 // Send a message
-const sendMessage =  async (req, res) => {
+const createMessage = async (req, res) => {
   try {
-    const { conversationId, sender, text } = req.body;
-
-    const message = new Message({ conversation: conversationId, sender, text });
+    const { conversation, sender, text } = req.body;
+    const message = new Message({ conversation, sender, text }); // include the sender as a recipient
     await message.save();
-
-    // Emit the message to the recipients using Socket.io
-    const io = req.app.get('io');
-    const conversation = await Conversation.findById(conversationId).populate('user1 user2');
-    const recipients = [conversation.user1._id, conversation.user2._id].filter(id => id.toString() !== sender);
-    recipients.forEach(recipient => {
-      io.to(recipient.toString()).emit('message', { conversation: conversationId, sender, text });
-    });
-
-    res.json(message);
+    res.status(201).json(message);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
@@ -69,7 +60,7 @@ const getMessages = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "Conversation ID required." });
 
-  const messages = await Message.findOne({ conversation: req.params.id }).exec();
+  const messages = await Message.find({ conversation: req.params.id }).exec();
   if (!messages) {
     return res
       .status(204)
@@ -81,7 +72,7 @@ const getMessages = async (req, res) => {
 module.exports = {
     getUserConversation,
     createConversation,
-    sendMessage,
+    createMessage,
     getAllConversations,
     getMessages
   };

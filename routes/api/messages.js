@@ -5,7 +5,7 @@ const conversationsController = require('../../controllers/conversationsControll
 const verifyRoles = require('../../middleware/verifyRoles');
 
 router.route('/')
-    .post(conversationsController.sendMessage);
+    .post(conversationsController.createMessage);
 
 router.route('/:id')
     .get(conversationsController.getMessages);
