@@ -5,7 +5,8 @@ const allowedOrigins = [
     'http://localhost:3500',
     'http://localhost:3000',
     'http://localhost:4000',
-    'http://192.168.0.74:3000'
+    'http://192.168.0.74:3000',
+    'https://admin.socket.io/'
 ];
 
 module.exports = allowedOrigins;

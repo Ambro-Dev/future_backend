@@ -1,9 +1,9 @@
-const Conversation = require('../model/Conversation');
-const Message = require('../model/Message');
-const User = require('../model/User');
+const Conversation = require("../model/Conversation");
+const Message = require("../model/Message");
+const User = require("../model/User");
 
 // Create a new conversation
-const createConversation =  async (req, res) => {
+const createConversation = async (req, res) => {
   try {
     const { name, members } = req.body;
 
@@ -13,33 +13,32 @@ const createConversation =  async (req, res) => {
     res.json(conversation);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
 // Get conversations for a user
-const getUserConversation =  async (req, res) => {
+const getUserConversation = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const conversations = await Conversation.find({members: req.params.id});
+    const conversations = await Conversation.find({ members: req.params.id });
 
     res.json(conversations);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-const getAllConversations =  async (req, res) => {
+const getAllConversations = async (req, res) => {
   try {
-
     const conversations = await Conversation.find();
 
     res.json(conversations);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -49,10 +48,11 @@ const createMessage = async (req, res) => {
     const { conversation, sender, text } = req.body;
     const message = new Message({ conversation, sender, text }); // include the sender as a recipient
     await message.save();
+    console.log(conversation);
     res.status(201).json(message);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -70,9 +70,9 @@ const getMessages = async (req, res) => {
 };
 
 module.exports = {
-    getUserConversation,
-    createConversation,
-    createMessage,
-    getAllConversations,
-    getMessages
-  };
+  getUserConversation,
+  createConversation,
+  createMessage,
+  getAllConversations,
+  getMessages,
+};

@@ -1,3 +1,4 @@
+const { instrument } = require("@socket.io/admin-ui");
 require("dotenv").config();
 const express = require("express");
 const app = express();
@@ -17,8 +18,9 @@ const Conversation = require("./model/Conversation");
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://admin.socket.io"],
     methods: ["GET", "POST"],
+    credentials: true
   },
 });
 const PORT = process.env.PORT || 3500;
@@ -85,56 +87,19 @@ mongoose.connection.once("open", () => {
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
-  Conversation.find({}, (err, conversations) => {
-    if (err) throw err;
-
-    socket.emit("conversationList", conversations);
-  });
-
-  User.find({}, (err, users) => {
-    if (err) throw err;
-
-    socket.emit("userList", users);
-  });
-
-  socket.on("create-conversation", (data) => {
-    // Create a new conversation conversation
-    const conversation = new Conversation({
-      name: data.name,
-      members: data.members,
-    });
-
-    conversation
-      .save()
-      .then(() => {
-        socket.emit("new-conversation", conversation);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  });
-
-  socket.on('join-conversation', ({ conversationId }) => {
+  socket.on("join-conversation", async (conversationId) => {
+    // Join the user to the conversation\
     socket.join(conversationId);
+    console.log(`User joined conversation ${conversationId}`);
 
-    // Send the messages in the conversation to the user
-    Message.find({ conversation: conversationId }, (err, messages) => {
-      if (err) throw err;
-
-      socket.emit('conversation-messages', messages);
-    });
+    const messages = await Message.find({ conversation: conversationId });
+    io.to(conversationId).emit("conversation-messages", messages);
   });
 
-  socket.on("leave-conversation", (data) => {
-    // Remove the user from the conversation's user list
-    console.log(`User ${data.user} left conversation ${data.conversation}`);
-    try {
-      socket.to(data.conversation).emit("user-left", { user: data.user });
-    } catch (err) {
-      console.error(err);
-    }
+  socket.on("leave-conversation", ({ conversation }) => {
     // Leave the user from the conversation
-    socket.leave(data.conversation);
+    socket.leave(conversation);
+    console.log(`User left conversation ${conversation}`);
   });
 
   socket.on("send-message", (data) => {
@@ -144,23 +109,16 @@ io.on("connection", (socket) => {
       text: data.text,
     });
     message.save().then(() => {
-      socket.to(data.conversation).emit("new-message", message);
+      io.to(data.conversation).emit("message", message);
     });
-  });
-
-  socket.on("receive-message", (data) => {
-    // Find messages in MongoDB for this user
-    Message.find({ receiver: data.receiver })
-      .then((messages) => {
-        // Send messages directly to this user
-        socket.emit("messages", messages);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
   });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected");
   });
+});
+
+instrument(io, {
+  auth: false,
+  mode: "development",
 });
