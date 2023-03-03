@@ -15,6 +15,7 @@ const mongoose = require("mongoose");
 const connectDB = require("./config/dbConn");
 const User = require("./model/User");
 const Conversation = require("./model/Conversation");
+const { createLesson } = require("./controllers/lessonsController");
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
@@ -112,6 +113,16 @@ io.on("connection", (socket) => {
       io.to(data.conversation).emit("message", message);
     });
   });
+
+  socket.on("join-course", (course) => {
+    socket.join(course);
+  });
+
+  socket.on("create-lesson", async (data) => {
+    const lesson = await createLesson(data.name, data.course, data.start, data.end);
+
+    io.to(data.course).emit("new-lesson", lesson);
+  })
 
   socket.on("disconnect", () => {
     console.log("A user disconnected");
