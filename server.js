@@ -121,7 +121,7 @@ io.on("connection", (socket) => {
   socket.on("create-lesson", async (data) => {
     const lesson = await createLesson(data.name, data.course, data.start, data.end);
 
-    io.to(data.course).emit("new-lesson", lesson);
+    io.to(data.course).emit("new-lesson", lesson); 
   })
 
   socket.on("disconnect", () => {
