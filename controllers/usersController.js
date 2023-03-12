@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const getAllUsers = async (req, res) => {
-  const users = await User.find().select("_id name surname studentNumber roles");;
+  const users = await User.find({ "roles.Admin": { $exists: false } }).select("_id name surname studentNumber roles");
   if (!users) return res.status(204).json({ message: "No users found" });
   res.json(users);
 };

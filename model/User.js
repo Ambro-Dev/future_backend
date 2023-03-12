@@ -25,6 +25,7 @@ const userSchema = new Schema({
     },
     Student: Number,
     Teacher: Number,
+    Admin: Number,
   },
   password: {
     type: String,
@@ -32,6 +33,7 @@ const userSchema = new Schema({
   },
   picture: {
     type: String,
+    default: "storage/user_storage/default/default.png"
   },
   refreshToken: String,
 });

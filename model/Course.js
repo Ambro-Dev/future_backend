@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const Event = require('./Event');
+
 
 const courseSchema = new Schema({
   name: {
@@ -10,15 +12,20 @@ const courseSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  groupIds: [
+  members: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Group",
+      ref: "User",
     },
   ],
   pic: {
     type: "string",
   },
+  events: [Event]
 });
 
-module.exports = mongoose.model("Course", courseSchema);
+const Course = mongoose.model("Course", courseSchema);
+
+module.exports = Course;
+
+

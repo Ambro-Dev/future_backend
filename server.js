@@ -15,7 +15,7 @@ const mongoose = require("mongoose");
 const connectDB = require("./config/dbConn");
 const User = require("./model/User");
 const Conversation = require("./model/Conversation");
-const { createLesson } = require("./controllers/lessonsController");
+const { createEvent } = require("./controllers/eventsController");
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
@@ -93,7 +93,8 @@ io.on("connection", (socket) => {
     socket.join(conversationId);
     console.log(`User joined conversation ${conversationId}`);
 
-    const messages = await Message.find({ conversation: conversationId });
+    const conversation = await Conversation.findById(conversationId);
+    const messages = conversation.messages;
     io.to(conversationId).emit("conversation-messages", messages);
   });
 
@@ -103,13 +104,15 @@ io.on("connection", (socket) => {
     console.log(`User left conversation ${conversation}`);
   });
 
-  socket.on("send-message", (data) => {
-    const message = new Message({
+  socket.on("send-message", async (data) => {
+    const conversation = await Conversation.findById(data.conversation);
+    const message = {
       sender: data.sender,
-      conversation: data.conversation,
       text: data.text,
-    });
-    message.save().then(() => {
+      createdAt: Date(),
+    };
+    conversation.messages.push(message);
+    conversation.save().then(() => {
       io.to(data.conversation).emit("message", message);
     });
   });
@@ -118,10 +121,10 @@ io.on("connection", (socket) => {
     socket.join(course);
   });
 
-  socket.on("create-lesson", async (data) => {
-    const lesson = await createLesson(data.name, data.course, data.start, data.end);
+  socket.on("create-event", async (data) => {
+    const event = await createEvent(data.name, data.description, data.start, data.end, data.url);
 
-    io.to(data.course).emit("new-lesson", lesson); 
+    io.to(data.course).emit("new-event", event); 
   })
 
   socket.on("disconnect", () => {

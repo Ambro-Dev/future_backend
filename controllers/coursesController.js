@@ -135,27 +135,41 @@ const getAllUserCourses = async (req, res) => {
     const userId = req.params.id;
 
     // Find all the groups that the student is in
-    const groups = await Group.find({ studentIds: userId });
+    const user = await User.findById(userId );
 
     // Get all courses associated with those groups
     const courses = await Course.find({
-      groupIds: { $in: groups.map((g) => g._id) },
+      members: { $in: user._id },
     })
       .populate("teacherId", "-_id name surname picture")
       .populate({
-        path: "groupIds",
-        select: "-_id studentIds",
-        populate: {
-          path: "studentIds",
-          select: "-_id name surname studentNumber picture",
-        },
+        path: "members",
+        select: "-_id name surname studentNumber picture",
       })
-      .select("-_id name teacherId groupIds");
+      .select("-_id name teacherId");
 
     res.json(courses);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getAllCourseMembers = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const course = await Course.findById(courseId).populate('members', '_id name surname studentNumber picture');
+    const members = course.members.map((member) => ({
+      _id: member._id,
+      name: member.name,
+      surname: member.surname,
+      studentNumber: member.studentNumber,
+      picture: member.picture,
+    }));
+    res.json(members);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -166,4 +180,5 @@ module.exports = {
   getAllCourseFiles,
   getAllUserCourses,
   addCourseFiles,
+  getAllCourseMembers
 };
