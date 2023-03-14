@@ -1,11 +1,21 @@
 const User = require("../model/User");
-const Groups = require("../model/Group");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 
 const getAllUsers = async (req, res) => {
   const users = await User.find({ "roles.Admin": { $exists: false } }).select("_id name surname studentNumber roles");
+  if (!users) return res.status(204).json({ message: "No users found" });
+  res.json(users);
+};
+
+const getAllTeachers = async (req, res) => {
+  const users = await User.find({ "roles.Teacher": { $exists: true } }).select("_id name surname");
+  if (!users) return res.status(204).json({ message: "No users found" });
+  res.json(users);
+};
+const getAllStudents = async (req, res) => {
+  const users = await User.find({ "roles.Student": { $exists: true } }).select("_id name surname studentNumber");
   if (!users) return res.status(204).json({ message: "No users found" });
   res.json(users);
 };
@@ -98,25 +108,12 @@ const uploadProfilePicture = async (req, res, err) => {
   });
 };
 
-const getUserGroups = async (req, res) => {
-  if (!req?.params?.id)
-    return res.status(400).json({ message: "User ID required" });
-    const user = await User.findOne({ _id: req.params.id }).exec();
-    if(!user) {
-        res.status(404).json({ message: "No user found" });
-    }
-  try {
-    const groups = await Groups.find({ studentIds: req.params.id });
-    res.json(groups);
-  } catch (error) {
-    res.status(500).json({ error: "Error retrieving groups" });
-  }
-};
 
 module.exports = {
   getAllUsers,
   deleteUser,
   getUser,
   uploadProfilePicture,
-  getUserGroups
+  getAllStudents,
+  getAllTeachers
 };

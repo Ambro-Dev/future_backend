@@ -6,17 +6,20 @@ const verifyRoles = require('../../middleware/verifyRoles');
 const coursesController = require('../../controllers/coursesController');
 
 router.route('/')
-    .get(usersController.getAllUsers)
+    .get(verifyRoles(ROLES_LIST.User), usersController.getAllUsers)
     .delete(verifyRoles(ROLES_LIST.User), usersController.deleteUser);
 
+router.route('/teachers')
+    .get(verifyRoles(ROLES_LIST.User), usersController.getAllTeachers)
+
+router.route('/students')
+    .get(verifyRoles(ROLES_LIST.User), usersController.getAllStudents)
+
 router.route('/:id')
-    .get(usersController.getUser);
+    .get(verifyRoles(ROLES_LIST.User), usersController.getUser);
 
 router.route('/:id/profile-picture')
     .post(verifyRoles(ROLES_LIST.User), usersController.uploadProfilePicture);
-
-router.route('/:id/groups')
-    .get(verifyRoles(ROLES_LIST.User), usersController.getUserGroups);
 
 router.route('/:id/courses')
     .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.Student), coursesController.getAllUserCourses)

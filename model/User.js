@@ -12,6 +12,7 @@ const userSchema = new Schema({
   studentNumber: {
     type: String,
     unique: true,
+    sparse: true 
   },
   email: {
     type: String,

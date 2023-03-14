@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ROLES_LIST = require('../../config/roles_list');
 const coursesController = require('../../controllers/coursesController');
+const foldersController = require('../../controllers/foldersController');
 const verifyRoles = require('../../middleware/verifyRoles');
 
 router.route('/')
@@ -17,5 +18,11 @@ router.route('/:id/files')
 
 router.route('/:id/members')
     .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.User, ROLES_LIST.Student), coursesController.getAllCourseMembers)
+
+router.route('/:id/teacher')
+    .get(verifyRoles(ROLES_LIST.User), coursesController.getCourseTeacher)
+
+router.route('/:id/filetree')
+    .get(verifyRoles(ROLES_LIST.User), foldersController.getTree)
 
 module.exports = router;

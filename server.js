@@ -4,7 +4,6 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const cors = require("cors");
-const Message = require("./model/Message");
 const corsOptions = require("./config/corsOptions");
 const { logger } = require("./middleware/logEvents");
 const errorHandler = require("./middleware/errorHandler");
@@ -21,7 +20,7 @@ const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
   },
 });
 const PORT = process.env.PORT || 3500;
@@ -60,11 +59,10 @@ app.use("/refresh", require("./routes/refresh"));
 app.use("/logout", require("./routes/logout"));
 
 app.use(verifyJWT);
-app.use("/groups", require("./routes/api/groups"));
 app.use("/users", require("./routes/api/users"));
 app.use("/courses", require("./routes/api/courses"));
 app.use("/conversations", require("./routes/api/conversations"));
-app.use("/messages", require("./routes/api/messages"));
+app.use("/events", require("./routes/api/events"));
 
 app.all("*", (req, res) => {
   res.status(404);
@@ -109,7 +107,7 @@ io.on("connection", (socket) => {
     const message = {
       sender: data.sender,
       text: data.text,
-      createdAt: Date(),
+      createdAt: Date.now(),
     };
     conversation.messages.push(message);
     conversation.save().then(() => {
@@ -122,10 +120,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("create-event", async (data) => {
-    const event = await createEvent(data.name, data.description, data.start, data.end, data.url);
+    const event = await createEvent(data);
 
-    io.to(data.course).emit("new-event", event); 
-  })
+    io.to(data.course).emit("new-event", event);
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected");

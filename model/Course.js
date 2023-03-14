@@ -1,9 +1,23 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
-const Event = require('./Event');
 
+const eventSchema = new mongoose.Schema(
+  {
+    title: { type: String },
+    description: { type: String },
+    start: {
+      type: Date,
+    },
+    end: {
+      type: Date,
+    },
+    createdAt: { type: Date, default: Date.now },
+    url: { type: String },
+    className: {type: String, default: "success"}
+  },
+  { timestamps: true }
+);
 
-const courseSchema = new Schema({
+const courseSchema = new mongoose.Schema({
   name: {
     type: "string",
     required: true,
@@ -21,7 +35,7 @@ const courseSchema = new Schema({
   pic: {
     type: "string",
   },
-  events: [Event]
+  events: [eventSchema]
 });
 
 const Course = mongoose.model("Course", courseSchema);

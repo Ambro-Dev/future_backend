@@ -1,8 +1,7 @@
 const Course = require("../model/Course");
-const Group = require("../model/Group");
 const User = require("../model/User");
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const getAllCourses = async (req, res) => {
   const courses = await Course.find();
@@ -17,22 +16,24 @@ const createNewCourse = async (req, res) => {
       .json({ message: "Name of the course and teacher are required" });
   }
   const teacher = await User.findById(req.body.teacherId);
-    if (!teacher) {
-        res
+  if (!teacher) {
+    res
       .status(400)
-      .json({ message: "No such teacher or provided id does not belong to teacher" });
-    }
+      .json({
+        message: "No such teacher or provided id does not belong to teacher",
+      });
+  }
 
   try {
     const { name, teacherId, groupIds } = req.body;
-      // Create the course in the database
-      const course = await Course.create({ name, teacherId, groupIds });
+    // Create the course in the database
+    const course = await Course.create({ name, teacherId, groupIds });
 
-      // Create a folder for the course using the course ID as the folder name
-      const folderName = course._id.toString();
-      fs.mkdirSync(`./public/storage/courses/${folderName}`);
+    // Create a folder for the course using the course ID as the folder name
+    const folderName = course._id.toString();
+    fs.mkdirSync(`./public/storage/courses/${folderName}`);
 
-      res.json(course);
+    res.json(course);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -52,29 +53,49 @@ const getCourse = async (req, res) => {
   res.json(course);
 };
 
-function getFilesInFolder(folderPath) {
-    const files = [];
-  
-    // Get a list of all files and subfolders in the folder
-    const folderContents = fs.readdirSync(folderPath);
-  
-    for (const content of folderContents) {
-      // Get the full path of the file or subfolder
-      const contentPath = path.join(folderPath, content);
-  
-      // If the content is a file, add its path to the list of files
-      if (fs.statSync(contentPath).isFile()) {
-        files.push(contentPath);
-      }
-  
-      // If the content is a subfolder, recursively call this function to get its files
-      if (fs.statSync(contentPath).isDirectory()) {
-        files.push(...getFilesInFolder(contentPath));
-      }
-    }
-  
-    return files;
+const getCourseTeacher = async (req, res) => {
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "Course ID required." });
+
+  const course = await Course.findById(req.params.id);
+  const teacher = await User.findById(course.teacherId);
+  const teacherInfo = {
+    _id: teacher.id,
+    name: teacher.name,
+    surname: teacher.surname,
+    picture: teacher.picture,
+  };
+  if (!course) {
+    return res
+      .status(204)
+      .json({ message: `No course matches ID ${req.params.id}.` });
   }
+  res.json(teacherInfo);
+};
+
+function getFilesInFolder(folderPath) {
+  const files = [];
+
+  // Get a list of all files and subfolders in the folder
+  const folderContents = fs.readdirSync(folderPath);
+
+  for (const content of folderContents) {
+    // Get the full path of the file or subfolder
+    const contentPath = path.join(folderPath, content);
+
+    // If the content is a file, add its path to the list of files
+    if (fs.statSync(contentPath).isFile()) {
+      files.push(contentPath);
+    }
+
+    // If the content is a subfolder, recursively call this function to get its files
+    if (fs.statSync(contentPath).isDirectory()) {
+      files.push(...getFilesInFolder(contentPath));
+    }
+  }
+
+  return files;
+}
 
 const getAllCourseFiles = async (req, res) => {
   try {
@@ -135,18 +156,18 @@ const getAllUserCourses = async (req, res) => {
     const userId = req.params.id;
 
     // Find all the groups that the student is in
-    const user = await User.findById(userId );
+    const user = await User.findById(userId);
 
     // Get all courses associated with those groups
     const courses = await Course.find({
       members: { $in: user._id },
     })
-      .populate("teacherId", "-_id name surname picture")
+      .populate("teacherId", "_id name surname picture")
       .populate({
         path: "members",
-        select: "-_id name surname studentNumber picture",
+        select: "_id name surname studentNumber picture",
       })
-      .select("-_id name teacherId");
+      .select("_id name teacherId");
 
     res.json(courses);
   } catch (err) {
@@ -158,7 +179,10 @@ const getAllUserCourses = async (req, res) => {
 const getAllCourseMembers = async (req, res) => {
   try {
     const courseId = req.params.id;
-    const course = await Course.findById(courseId).populate('members', '_id name surname studentNumber picture');
+    const course = await Course.findById(courseId).populate(
+      "members",
+      "_id name surname studentNumber picture"
+    );
     const members = course.members.map((member) => ({
       _id: member._id,
       name: member.name,
@@ -169,7 +193,7 @@ const getAllCourseMembers = async (req, res) => {
     res.json(members);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -180,5 +204,6 @@ module.exports = {
   getAllCourseFiles,
   getAllUserCourses,
   addCourseFiles,
-  getAllCourseMembers
+  getAllCourseMembers,
+  getCourseTeacher,
 };
