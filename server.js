@@ -23,6 +23,9 @@ const io = require("socket.io")(http, {
     credentials: true,
   },
 });
+const Grid = require("gridfs-stream");
+const { GridFsStorage } = require("multer-gridfs-storage");
+
 const PORT = process.env.PORT || 3500;
 const socketIOPort = process.env.SOCKETIO_PORT || 4000;
 
@@ -63,6 +66,8 @@ app.use("/users", require("./routes/api/users"));
 app.use("/courses", require("./routes/api/courses"));
 app.use("/conversations", require("./routes/api/conversations"));
 app.use("/events", require("./routes/api/events"));
+app.use("/files", require("./routes/api/files"));
+app.set("view-engine", "react");
 
 app.all("*", (req, res) => {
   res.status(404);
@@ -76,11 +81,17 @@ app.all("*", (req, res) => {
 });
 app.use(errorHandler);
 
-mongoose.connection.once("open", () => {
+const connection = mongoose.connection;
+
+connection.once("open", () => {
   console.log("Connected to MongoDB");
   http.listen(PORT, () => {
     console.log(`HTTP server listening on port ${PORT}`);
   });
+  const gfs = new mongoose.mongo.GridFSBucket(connection.db, {
+    bucketName: "course_files",
+  });
+  module.exports.gfs = gfs;
 });
 
 io.on("connection", (socket) => {
