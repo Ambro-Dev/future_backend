@@ -16,6 +16,7 @@ const User = require("./model/User");
 const Conversation = require("./model/Conversation");
 const { createEvent } = require("./controllers/eventsController");
 const http = require("http").createServer(app);
+const imageRoutes = require('./controllers/filesController');
 const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
@@ -69,7 +70,7 @@ app.use("/users", require("./routes/api/users"));
 app.use("/courses", require("./routes/api/courses"));
 app.use("/conversations", require("./routes/api/conversations"));
 app.use("/events", require("./routes/api/events"));
-app.use("/files", require("./routes/api/files"));
+app.use("/files", imageRoutes);
 
 app.all("*", (req, res) => {
   res.status(404);
@@ -127,14 +128,18 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("join-course", (course) => {
-    socket.join(course);
+  socket.on("new-event", async (data) => {
+      io.to(data.course).emit("event", data);
   });
 
-  socket.on("create-event", async (data) => {
-    const event = await createEvent(data);
+  socket.on("join-course", async (course) => {
+    socket.join(course);
+    console.log("User joind course:", course);
+  });
 
-    io.to(data.course).emit("new-event", event);
+  socket.on("leave-course", async (course) => {
+    socket.leave(course);
+    console.log("User left course:", course);
   });
 
   socket.on("disconnect", () => {
