@@ -167,7 +167,7 @@ const getAllUserCourses = async (req, res) => {
         path: "members",
         select: "_id name surname studentNumber picture",
       })
-      .select("_id name teacherId");
+      .select("_id name teacherId pic");
 
     res.json(courses);
   } catch (err) {

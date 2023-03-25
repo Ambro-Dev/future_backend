@@ -34,6 +34,30 @@ const getCourseEvents = async (req, res) => {
   res.json(course.events);
 };
 
+const getUserEvents = async (req, res) => {
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "User ID required" });
+  
+  const courses = await Course.find({ members: req.params.id }).exec();
+  
+  if (!courses.length) {
+    return res
+      .status(204)
+      .json({ message: `User ID ${req.params.id} is not a member of any courses` });
+  }
+  
+  const events = courses
+    .map(course => course.events)
+    .flat()
+    .map(event => {
+      const { _id, title, start, end, url } = event;
+      return { _id, title, start, end, url };
+    });
+  
+  res.json(events);
+};
+
+
 const setEventUrl = async (req, res) => {
   console.log(req.body);
   try {
@@ -58,4 +82,4 @@ const setEventUrl = async (req, res) => {
   }
 };
 
-module.exports = { createEvent, getCourseEvents, setEventUrl };
+module.exports = { createEvent, getCourseEvents, setEventUrl, getUserEvents };

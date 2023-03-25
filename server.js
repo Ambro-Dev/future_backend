@@ -96,8 +96,26 @@ connection.once("open", () => {
   module.exports.gfs = gfs;
 });
 
+const users = {};
+
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
+
+  socket.on("register", (userId) => {
+    users[userId] = socket.id;
+
+    for (const otherUserId in users) {
+      if (otherUserId !== userId) {
+        io.to(socket.id).emit("otherUserRegistered", otherUserId);
+      }
+    }
+
+    for (const otherUserId in users) {
+      if (otherUserId !== userId) {
+        io.to(users[otherUserId]).emit("otherUserRegistered", userId);
+      }
+    }
+  });
 
   socket.on("join-conversation", async (conversationId) => {
     // Join the user to the conversation\

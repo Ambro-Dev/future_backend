@@ -14,4 +14,7 @@ router.route('/:id')
 router.route('/:id/update')
     .put(verifyRoles(ROLES_LIST.User), eventsController.setEventUrl);
 
+router.route('/user/:id')
+    .get(verifyRoles(ROLES_LIST.User), eventsController.getUserEvents);
+
 module.exports = router;

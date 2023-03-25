@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const availableImages = require("../config/availableImages"); 
 
 const eventSchema = new mongoose.Schema(
   {
@@ -34,6 +35,7 @@ const courseSchema = new mongoose.Schema({
   ],
   pic: {
     type: "string",
+    default: availableImages[Math.floor(Math.random() * availableImages.length)],
   },
   events: [eventSchema]
 });
