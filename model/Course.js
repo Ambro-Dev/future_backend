@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const availableImages = require("../config/availableImages"); 
+const availableImages = require("../config/availableImages");
 
 const eventSchema = new mongoose.Schema(
   {
@@ -13,7 +13,7 @@ const eventSchema = new mongoose.Schema(
     },
     createdAt: { type: Date, default: Date.now },
     url: { type: String },
-    className: {type: String, default: "success"}
+    className: { type: String, default: "success" },
   },
   { timestamps: true }
 );
@@ -22,6 +22,9 @@ const courseSchema = new mongoose.Schema({
   name: {
     type: "string",
     required: true,
+  },
+  description: {
+    type: "string",
   },
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -35,13 +38,17 @@ const courseSchema = new mongoose.Schema({
   ],
   pic: {
     type: "string",
-    default: availableImages[Math.floor(Math.random() * availableImages.length)],
+    default:
+      availableImages[Math.floor(Math.random() * availableImages.length)],
   },
-  events: [eventSchema]
+  events: [eventSchema],
+  files: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+  ],
 });
 
 const Course = mongoose.model("Course", courseSchema);
 
 module.exports = Course;
-
-

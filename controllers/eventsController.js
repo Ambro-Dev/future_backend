@@ -9,6 +9,7 @@ const createEvent = async (req, res) => {
       url: req.body.url,
       start: req.body.start,
       end: req.body.end,
+      className: req.body.className
     };
     courseId.events.push(event);
 

@@ -34,7 +34,7 @@ const userSchema = new Schema({
   },
   picture: {
     type: String,
-    default: "storage/user_storage/default/default.png"
+    default: "796b0db7fe9f9f149e77a3cacc5e42e3.png"
   },
   refreshToken: String,
 });

@@ -8,7 +8,6 @@ const multer = require('multer');
 const crypto = require('crypto');
 const path = require('path');
 const User = require('../model/User');
-const Course = require('../model/Course');
 require('dotenv').config();
 
 const mongoURI = process.env.DATABASE_URI;
@@ -21,7 +20,7 @@ const conn = mongoose.createConnection(mongoURI, {
 let gfs;
 conn.once('open', () => {
   gfs = new mongoose.mongo.GridFSBucket(conn.db, {
-    bucketName: 'courseFiles',
+    bucketName: 'images',
   });
 });
 
@@ -41,10 +40,7 @@ const storage = new GridFsStorage({
         const filename = buf.toString('hex') + path.extname(file.originalname);
         const fileInfo = {
           filename: filename,
-          bucketName: 'courseFiles',
-          metadata: {
-            originalFilename: file.originalname // add original filename as metadata
-          }
+          bucketName: 'images',
         };
         // resolve these properties so they will be added to the new file document
         resolve(fileInfo);
@@ -56,7 +52,7 @@ const storage = new GridFsStorage({
 function checkFileType(file, cb) {
   // https://youtu.be/9Qzmri1WaaE?t=1515
   // define a regex that includes the file types we accept
-  const filetypes = /doc|docx|pdf|xlsx|xls|csv|odt|zip|jpg|png|jpeg/;
+  const filetypes = /jpeg|jpg|png|gif/;
   //check the file extention
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   // more importantly, check the mimetype
@@ -79,13 +75,13 @@ const store = multer({
 });
 
 const uploadMiddleware = (req, res, next) => {
-  const upload = store.single("file");
+  const upload = store.single("picture");
   upload(req, res, function (err) {
     if (err instanceof multer.MulterError) {
       return res.status(400).send('File too large');
     } else if (err) {
       // check if our filetype error occurred
-      if (err === 'filetype') return res.status(400).send('Invalid file type');
+      if (err === 'filetype') return res.status(400).send('Image files only');
       // An unknown error occurred when uploading.
       return res.sendStatus(500);
     }
@@ -103,66 +99,51 @@ const deleteImage = (id) => {
   });
 };
 
-router.post('/:courseId/upload', uploadMiddleware, async (req, res) => {
+router.post('/users/:userId/picture', uploadMiddleware, async (req, res) => {
   try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
     const { file } = req;
-    console.log(req.params.courseId);
-    if (file.size > 1000000) { // 1mb
+    if (file.size > 1000000) {
       // if the file is too large, delete it and send an error
       return res.status(400).send('file may not exceed 1mb');
     }
-    const course = await Course.findByIdAndUpdate(
-      req.params.courseId,
-      { $push: { files: file.id } }, // store the file ID instead of file._id
-      { new: true }
-    );
-    if (!course) {
-      return res.status(404).send('Course not found');
-    }
-    res.status(200).json({
-      message: 'File uploaded successfully',
-    });
+    user.picture = req.file.filename;
+    await user.save();
+    res.send('Picture uploaded');
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');
   }
 });
-
 
 // this route will be accessed by any img tags on the front end which have
 // src tags like
 // <img src="/api/image/123456789" alt="example"/>
 // <img src={`/api/image/${user.profilePic}`} alt="example"/>
-router.get('/:courseId', async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.courseId);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+router.get('/users/:userId/picture', async ({ params: { userId } }, res) => {
+  // if no id return error
+  if (!userId || userId === 'undefined') return res.status(400).send('no user id');
+  const user = await User.findById(userId);
+    if (!user || !user.picture) {
+      return res.status(404).send('Picture not found');
     }
-
-    const fileIds = course.files;
-    const files = [];
-    for (const fileId of fileIds) {
-      const file = await gfs.find({ _id: fileId }).toArray();
-      if (file.length === 0) {
-        return res.status(404).json({ message: 'File not found' });
-      }
-      files.push({
-        filename: file[0].filename,
-        originalname: file[0].metadata.originalFilename // retrieve original filename from metadata
-      });
-    }
-    res.json(files);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
-  }
+  // if there is an id string, cast it to mongoose's objectId type
+  // search for the image by id
+  gfs.find({ filename: user.picture }).toArray((err, file) => {
+    if (!file || file.length === 0)
+      return res.status(400).send('no files exist');
+    // if a file exists, send the data
+    console.log(file);
+    gfs.openDownloadStream(file[0]._id).pipe(res);
+  });
 });
-
 
 router.get('/users/picture', async (req, res) => {
   try {
-    const user = await Course.findById(req.params.userId);
+    const user = await User.findById(req.params.userId);
     if (!user || !user.picture) {
       return res.status(404).send('Picture not found');
     }
@@ -177,28 +158,6 @@ router.get('/users/picture', async (req, res) => {
     console.error(error);
     res.status(500).send('Server error');
   }
-});
-
-router.get('/file/:filename', (req, res) => {
-  gfs.find({ filename: req.params.filename })
-    .toArray((err, files) => {
-      if (err) {
-        return res.status(500).json({
-          message: 'Error retrieving file',
-        });
-      }
-
-      if (!files || files.length === 0) {
-        return res.status(404).json({
-          message: 'File not found',
-        });
-      }
-
-      const readstream = gfs.openDownloadStreamByName(req.params.filename);
-      res.set('Content-Type', files[0].contentType);
-      res.set('Content-Disposition', 'attachment; filename="' + files[0].filename + '"');
-      readstream.pipe(res);
-    });
 });
 
 module.exports = router;

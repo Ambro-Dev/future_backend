@@ -16,7 +16,8 @@ const User = require("./model/User");
 const Conversation = require("./model/Conversation");
 const { createEvent } = require("./controllers/eventsController");
 const http = require("http").createServer(app);
-const imageRoutes = require('./controllers/filesController');
+const imageRoutes = require("./controllers/pictureController");
+const filesRoutes = require("./controllers/filesController");
 const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
@@ -70,7 +71,8 @@ app.use("/users", require("./routes/api/users"));
 app.use("/courses", require("./routes/api/courses"));
 app.use("/conversations", require("./routes/api/conversations"));
 app.use("/events", require("./routes/api/events"));
-app.use("/files", imageRoutes);
+app.use("/profile-picture", imageRoutes);
+app.use("/files", filesRoutes);
 
 app.all("*", (req, res) => {
   res.status(404);
@@ -92,7 +94,7 @@ connection.once("open", () => {
     console.log(`HTTP server listening on port ${PORT}`);
   });
   const gfs = Grid(connection.db, mongoose.mongo);
-  gfs.collection = ("uploads");
+  gfs.collection = "uploads";
   module.exports.gfs = gfs;
 });
 
@@ -141,13 +143,14 @@ io.on("connection", (socket) => {
       createdAt: Date.now(),
     };
     conversation.messages.push(message);
-    conversation.save().then(() => {
-      io.to(data.conversation).emit("message", message);
-    });
+    const savedConversation = await conversation.save();
+    const savedMessage =
+      savedConversation.messages[savedConversation.messages.length - 1];
+    io.to(data.conversation).emit("message", savedMessage);
   });
 
   socket.on("new-event", async (data) => {
-      io.to(data.course).emit("event", data);
+    io.to(data.course).emit("event", data);
   });
 
   socket.on("join-course", async (course) => {

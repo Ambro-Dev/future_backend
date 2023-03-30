@@ -20,6 +20,17 @@ const getAllStudents = async (req, res) => {
   res.json(users);
 };
 
+const updateAllPicture = async (req, res) => {
+  User.updateMany({}, { $set: { picture: '796b0db7fe9f9f149e77a3cacc5e42e3.png' } })
+  .then((result) => {
+    console.log(`${result.nModified} users updated`);
+  })
+  .catch((err) => {
+    console.error(err);
+  });
+}
+
+
 const deleteUser = async (req, res) => {
   if (!req?.body?.id)
     return res.status(400).json({ message: "User ID required" });
@@ -115,5 +126,6 @@ module.exports = {
   getUser,
   uploadProfilePicture,
   getAllStudents,
-  getAllTeachers
+  getAllTeachers,
+  updateAllPicture
 };

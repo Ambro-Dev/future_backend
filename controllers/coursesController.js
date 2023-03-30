@@ -10,7 +10,7 @@ const getAllCourses = async (req, res) => {
 };
 
 const createNewCourse = async (req, res) => {
-  if (!req?.body?.name || !req?.body?.teacherId) {
+  if (!req?.body?.name || !req?.body?.teacherId || !req?.body?.description) {
     return res
       .status(400)
       .json({ message: "Name of the course and teacher are required" });
@@ -25,9 +25,9 @@ const createNewCourse = async (req, res) => {
   }
 
   try {
-    const { name, teacherId, groupIds } = req.body;
+    const { name, teacherId, description, pic } = req.body;
     // Create the course in the database
-    const course = await Course.create({ name, teacherId, groupIds });
+    const course = await Course.create({ name, teacherId, description, pic });
 
     // Create a folder for the course using the course ID as the folder name
     const folderName = course._id.toString();
@@ -176,6 +176,31 @@ const getAllUserCourses = async (req, res) => {
   }
 };
 
+const getAllTeacherCourses = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Find all the groups that the student is in
+    const user = await User.findById(userId);
+
+    // Get all courses associated with those groups
+    const courses = await Course.find({
+      teacherId: { $in: user._id },
+    })
+      .populate("teacherId", "_id name surname picture")
+      .populate({
+        path: "members",
+        select: "_id name surname studentNumber picture",
+      })
+      .select("_id name teacherId pic");
+
+    res.json(courses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const getAllCourseMembers = async (req, res) => {
   try {
     const courseId = req.params.id;
@@ -206,4 +231,5 @@ module.exports = {
   addCourseFiles,
   getAllCourseMembers,
   getCourseTeacher,
+  getAllTeacherCourses
 };

@@ -18,10 +18,16 @@ router.route('/students')
 router.route('/:id')
     .get(verifyRoles(ROLES_LIST.User), usersController.getUser);
 
+router.route('/updateall')
+    .put(verifyRoles(ROLES_LIST.User), usersController.updateAllPicture);
+
 router.route('/:id/profile-picture')
     .post(verifyRoles(ROLES_LIST.User), usersController.uploadProfilePicture);
 
 router.route('/:id/courses')
-    .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.Student), coursesController.getAllUserCourses)
+    .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.Student), coursesController.getAllUserCourses);
+
+router.route('/teacher/:id/courses')
+    .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.User), coursesController.getAllTeacherCourses)
 
 module.exports = router;
