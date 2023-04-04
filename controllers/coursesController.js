@@ -29,10 +29,6 @@ const createNewCourse = async (req, res) => {
     // Create the course in the database
     const course = await Course.create({ name, teacherId, description, pic });
 
-    // Create a folder for the course using the course ID as the folder name
-    const folderName = course._id.toString();
-    fs.mkdirSync(`./public/storage/courses/${folderName}`);
-
     res.json(course);
   } catch (err) {
     console.error(err);
@@ -71,84 +67,6 @@ const getCourseTeacher = async (req, res) => {
       .json({ message: `No course matches ID ${req.params.id}.` });
   }
   res.json(teacherInfo);
-};
-
-function getFilesInFolder(folderPath) {
-  const files = [];
-
-  // Get a list of all files and subfolders in the folder
-  const folderContents = fs.readdirSync(folderPath);
-
-  for (const content of folderContents) {
-    // Get the full path of the file or subfolder
-    const contentPath = path.join(folderPath, content);
-
-    // If the content is a file, add its path to the list of files
-    if (fs.statSync(contentPath).isFile()) {
-      files.push(contentPath);
-    }
-
-    // If the content is a subfolder, recursively call this function to get its files
-    if (fs.statSync(contentPath).isDirectory()) {
-      files.push(...getFilesInFolder(contentPath));
-    }
-  }
-
-  return files;
-}
-
-const getAllCourseFiles = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Find the course in the database
-    const course = await Course.findById(id);
-
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" });
-    }
-
-    // Get a list of all files in the course folder
-    const folderName = course._id.toString();
-    const files = getFilesInFolder(`./public/storage/courses/${folderName}`);
-
-    res.json(files);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-const addCourseFiles = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { fileName, fileContent } = req.body;
-
-    // Find the course in the database
-    const course = await Course.findById(id);
-
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" });
-    }
-
-    // Get the path of the course folder
-    const folderName = course._id.toString();
-    const folderPath = `./public/storage/${folderName}`;
-
-    // Create the course folder if it doesn't exist
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath);
-    }
-
-    // Create the new file in the course folder
-    const filePath = path.join(folderPath, fileName);
-    fs.writeFileSync(filePath, fileContent);
-
-    res.json({ message: "File created successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
 };
 
 const getAllUserCourses = async (req, res) => {
@@ -226,9 +144,7 @@ module.exports = {
   getAllCourses,
   createNewCourse,
   getCourse,
-  getAllCourseFiles,
   getAllUserCourses,
-  addCourseFiles,
   getAllCourseMembers,
   getCourseTeacher,
   getAllTeacherCourses

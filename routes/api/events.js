@@ -17,4 +17,19 @@ router.route('/:id/update')
 router.route('/user/:id')
     .get(verifyRoles(ROLES_LIST.User), eventsController.getUserEvents);
 
+router.route('/exam/create')
+    .post(verifyRoles(ROLES_LIST.User), eventsController.createExam);
+
+router.route('/exam/:id')
+    .put(verifyRoles(ROLES_LIST.User), eventsController.updateExam);
+
+router.route('/exam/:event')
+    .get(verifyRoles(ROLES_LIST.User), eventsController.getExam);
+
+router.route('/exam/:id/results')
+    .put(verifyRoles(ROLES_LIST.User), eventsController.saveExamResults);
+
+router.route('/exam/:id/results')
+    .get(verifyRoles(ROLES_LIST.User), eventsController.getAllExamResultsForUser);
+
 module.exports = router;

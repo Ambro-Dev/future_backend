@@ -22,7 +22,7 @@ const getUserConversation = async (req, res) => {
     const { userId } = req.params;
 
     const conversations = await Conversation.find({ members: req.params.id })
-      .populate("members", "id name surname picture")
+      .populate("members", "_id name surname picture")
       .exec();
 
     res.json(conversations);

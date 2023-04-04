@@ -12,10 +12,6 @@ router.route('/')
 router.route('/:id')
     .get(coursesController.getCourse);
 
-router.route('/:id/files')
-    .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.Student, ROLES_LIST.User), coursesController.getAllCourseFiles)
-    .post(verifyRoles(ROLES_LIST.Teacher), coursesController.addCourseFiles);
-
 router.route('/:id/members')
     .get(verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.User, ROLES_LIST.Student), coursesController.getAllCourseMembers)
 
