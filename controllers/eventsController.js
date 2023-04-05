@@ -90,22 +90,24 @@ const updateExam = async (req, res) => {
 const getAllExamResultsForUser = async (req, res) => {
   const userId = req.params.id;
   const exams = await Exam.find({ "results.userId": userId });
-  const examResults = exams.map((exam) => {
+  const examResults = await Promise.all(exams.map(async (exam) => {
+    const course = await Course.findOne({ events: { $elemMatch: { _id: exam.eventId } } });
     const examResult = {
+      courseName: course.name,
       examId: exam._id,
       examTitle: exam.title,
-      results: exam.results,
+      results: exam.results
     };
     exam.results.forEach((result) => {
       if (result.userId === userId) {
         examResult.results.push(result.json.totalScore);
       }
     });
-    console.log(examResult);
     return examResult;
-  });
+  }));
   return res.json(examResults);
 };
+
 
 const saveExamResults = async (req, res) => {
   const surveyId = req.params.id;
@@ -153,8 +155,8 @@ const getUserEvents = async (req, res) => {
     .map((course) => course.events)
     .flat()
     .map((event) => {
-      const { _id, title, start, end, url, className } = event;
-      return { _id, title, start, end, url, className };
+      const { _id, title, start, end, url, className, description } = event;
+      return { _id, title, start, end, url, className, description };
     });
 
   res.json(events);

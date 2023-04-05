@@ -21,4 +21,7 @@ router.route('/:id/teacher')
 router.route('/:id/filetree')
     .get(verifyRoles(ROLES_LIST.User), foldersController.getTree)
 
+router.route('/:id/event')
+    .get(verifyRoles(ROLES_LIST.User), coursesController.getCourseForEvent)
+
 module.exports = router;

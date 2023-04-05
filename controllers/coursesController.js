@@ -49,6 +49,21 @@ const getCourse = async (req, res) => {
   res.json(course);
 };
 
+const getCourseForEvent = async (req, res) => {
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "Event ID required." });
+
+    const eventId = req.params.id;
+    const course = await Course.findOne({
+      events: { $elemMatch: { _id: eventId } }
+    }).exec();
+    
+    if (!course) {
+      return res.status(204).json({ message: `No course found for event ID ${eventId}` });
+    }
+  res.json(course);
+};
+
 const getCourseTeacher = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "Course ID required." });
@@ -147,5 +162,6 @@ module.exports = {
   getAllUserCourses,
   getAllCourseMembers,
   getCourseTeacher,
-  getAllTeacherCourses
+  getAllTeacherCourses,
+  getCourseForEvent
 };
