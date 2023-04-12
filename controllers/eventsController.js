@@ -1,5 +1,6 @@
 const Course = require("../model/Course");
 const Exam = require("../model/Exam");
+const User = require("../model/User");
 
 const createEvent = async (req, res) => {
   try {
@@ -45,6 +46,7 @@ const createExam = async (req, res) => {
     title: req.body.title,
     json: req.body.json,
     eventId: req.body.event,
+    teacherId: req.body.teacher,
   };
 
   const newSurvey = new Exam(surveyData);
@@ -90,24 +92,62 @@ const updateExam = async (req, res) => {
 const getAllExamResultsForUser = async (req, res) => {
   const userId = req.params.id;
   const exams = await Exam.find({ "results.userId": userId });
-  const examResults = await Promise.all(exams.map(async (exam) => {
-    const course = await Course.findOne({ events: { $elemMatch: { _id: exam.eventId } } });
-    const examResult = {
-      courseName: course.name,
-      examId: exam._id,
-      examTitle: exam.title,
-      results: exam.results
-    };
-    exam.results.forEach((result) => {
-      if (result.userId === userId) {
-        examResult.results.push(result.json.totalScore);
+  const examResults = {};
+  await Promise.all(
+    exams.map(async (exam) => {
+      const course = await Course.findOne({
+        events: { $elemMatch: { _id: exam.eventId } },
+      });
+      const userResults = exam.results.filter((result) => {
+        return result.userId.toString() === userId.toString();
+      });
+      const examResult = {
+        examId: exam._id,
+        examTitle: exam.title,
+        results: userResults,
+      };
+      if (course.name in examResults) {
+        examResults[course.name].push(examResult);
+      } else {
+        examResults[course.name] = [examResult];
       }
-    });
-    return examResult;
-  }));
+    })
+  );
   return res.json(examResults);
 };
 
+
+const getAllExamResultsForTeacher = async (req, res) => {
+  const teacherId = req.params.id;
+  const exams = await Exam.find({ teacherId: teacherId });
+  const examResults = await Promise.all(
+    exams.map(async (exam) => {
+      const course = await Course.findOne({
+        events: { $elemMatch: { _id: exam.eventId } },
+      });
+      const examResult = {
+        courseName: course.name,
+        examId: exam._id,
+        examTitle: exam.title,
+        results: [],
+      };
+      const resultPromises = exam.results.map(async (result) => {
+        const user = await User.findOne({ _id: result.userId });
+        const userResult = {
+          userId: user._id,
+          userName: user.name,
+          userSurname: user.surname,
+          totalScore: result.json.totalScore,
+          maxScore: result.json.maxScore,
+        };
+        examResult.results.push(userResult);
+      });
+      await Promise.all(resultPromises);
+      return examResult;
+    })
+  );
+  return res.json(examResults);
+};
 
 const saveExamResults = async (req, res) => {
   const surveyId = req.params.id;
@@ -196,4 +236,5 @@ module.exports = {
   getExam,
   saveExamResults,
   getAllExamResultsForUser,
+  getAllExamResultsForTeacher,
 };

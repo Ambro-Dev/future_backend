@@ -32,4 +32,7 @@ router.route('/exam/:id/results')
 router.route('/exam/:id/results')
     .get(verifyRoles(ROLES_LIST.User), eventsController.getAllExamResultsForUser);
 
+router.route('/exam/:id/teacher')
+    .get(verifyRoles(ROLES_LIST.User), eventsController.getAllExamResultsForTeacher);
+
 module.exports = router;

@@ -37,6 +37,10 @@ const examSchema = new Schema(
       ref: "Event",
     },
     results: [resultSchema],
+    teacherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     createdAt: { type: Date, default: Date.now() },
   },
   { timestamps: true }

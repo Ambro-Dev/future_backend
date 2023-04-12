@@ -94,15 +94,6 @@ const uploadMiddleware = (req, res, next) => {
   });
 };
 
-
-const deleteImage = (id) => {
-  if (!id || id === 'undefined') return res.status(400).send('no image id');
-  const _id = new mongoose.Types.ObjectId(id);
-  gfs.delete(_id, (err) => {
-    if (err) return res.status(500).send('image deletion error');
-  });
-};
-
 router.post('/:courseId/upload', uploadMiddleware, async (req, res) => {
   try {
     const { file } = req;
@@ -178,6 +169,14 @@ router.get('/users/picture', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
+const deleteFile = (id) => {
+  if (!id || id === 'undefined') return res.status(400).send('no image id');
+  const _id = new mongoose.Types.ObjectId(id);
+  gfs.delete(_id, (err) => {
+    if (err) return res.status(500).send('image deletion error');
+  });
+};
 
 router.get('/file/:filename', (req, res) => {
   gfs.find({ filename: req.params.filename })
