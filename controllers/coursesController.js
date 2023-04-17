@@ -155,6 +155,19 @@ const getAllCourseMembers = async (req, res) => {
   }
 };
 
+const deleteCourse = async (req, res) => {
+  if (!req?.body?.id)
+    return res.status(400).json({ message: "Course ID required" });
+  const course = await Course.findOne({ _id: req.body.id }).exec();
+  if (!course) {
+    return res
+      .status(204)
+      .json({ message: `Course ID ${req.body.id} not found` });
+  }
+  const result = await course.deleteOne({ _id: req.body.id });
+  res.json(result);
+};
+
 module.exports = {
   getAllCourses,
   createNewCourse,
@@ -163,5 +176,6 @@ module.exports = {
   getAllCourseMembers,
   getCourseTeacher,
   getAllTeacherCourses,
-  getCourseForEvent
+  getCourseForEvent,
+  deleteCourse
 };
