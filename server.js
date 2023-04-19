@@ -18,6 +18,7 @@ const { createEvent } = require("./controllers/eventsController");
 const http = require("http").createServer(app);
 const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
+const adminRoutes = require("./controllers/adminController");
 const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
@@ -73,6 +74,7 @@ app.use("/conversations", require("./routes/api/conversations"));
 app.use("/events", require("./routes/api/events"));
 app.use("/profile-picture", imageRoutes);
 app.use("/files", filesRoutes);
+app.use("/admin", adminRoutes);
 
 app.all("*", (req, res) => {
   res.status(404);
