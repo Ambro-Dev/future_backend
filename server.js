@@ -74,7 +74,7 @@ app.use("/conversations", require("./routes/api/conversations"));
 app.use("/events", require("./routes/api/events"));
 app.use("/profile-picture", imageRoutes);
 app.use("/files", filesRoutes);
-app.use("/admin", adminRoutes);
+app.use("/admin", require("./routes/api/admin"));
 
 app.all("*", (req, res) => {
   res.status(404);

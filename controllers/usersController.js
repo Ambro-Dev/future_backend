@@ -4,32 +4,48 @@ const fs = require("fs");
 const path = require("path");
 
 const getAllUsers = async (req, res) => {
-  const users = await User.find({ "roles.Admin": { $exists: false } }).select("_id name surname studentNumber roles");
+  const users = await User.find({ "roles.Admin": { $exists: false } }).select(
+    "_id name surname studentNumber roles"
+  );
+  if (!users) return res.status(204).json({ message: "No users found" });
+  res.json(users);
+};
+
+const getAllUsersforAdmin = async (req, res) => {
+  const users = await User.find({}).select(
+    "_id name surname email studentNumber roles"
+  );
   if (!users) return res.status(204).json({ message: "No users found" });
   res.json(users);
 };
 
 const getAllTeachers = async (req, res) => {
-  const users = await User.find({ "roles.Teacher": { $exists: true } }).select("_id name surname");
+  const users = await User.find({ "roles.Teacher": { $exists: true } }).select(
+    "_id name surname"
+  );
   if (!users) return res.status(204).json({ message: "No users found" });
   res.json(users);
 };
 const getAllStudents = async (req, res) => {
-  const users = await User.find({ "roles.Student": { $exists: true } }).select("_id name surname studentNumber");
+  const users = await User.find({ "roles.Student": { $exists: true } }).select(
+    "_id name surname studentNumber"
+  );
   if (!users) return res.status(204).json({ message: "No users found" });
   res.json(users);
 };
 
 const updateAllPicture = async (req, res) => {
-  User.updateMany({}, { $set: { picture: '796b0db7fe9f9f149e77a3cacc5e42e3.png' } })
-  .then((result) => {
-    console.log(`${result.nModified} users updated`);
-  })
-  .catch((err) => {
-    console.error(err);
-  });
-}
-
+  User.updateMany(
+    {},
+    { $set: { picture: "796b0db7fe9f9f149e77a3cacc5e42e3.png" } }
+  )
+    .then((result) => {
+      console.log(`${result.nModified} users updated`);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
 
 const deleteUser = async (req, res) => {
   if (!req?.body?.id)
@@ -119,7 +135,6 @@ const uploadProfilePicture = async (req, res, err) => {
   });
 };
 
-
 module.exports = {
   getAllUsers,
   deleteUser,
@@ -127,5 +142,6 @@ module.exports = {
   uploadProfilePicture,
   getAllStudents,
   getAllTeachers,
-  updateAllPicture
+  updateAllPicture,
+  getAllUsersforAdmin
 };

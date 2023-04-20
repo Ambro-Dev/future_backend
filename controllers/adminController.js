@@ -1,25 +1,20 @@
-const express = require("express");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const User = require("../model/User");
-const csv = require("csv-parser");
+const csvtojson = require("csvtojson");
+const path = require("path");
 const fs = require("fs");
-const multer = require("multer");
 require("dotenv").config();
 
-const router = express.Router();
-
-const upload = multer({ dest: "uploads/" });
-
-router.get("/student-schema", async (req, res) => {
+const getStudentCsv = async (req, res) => {
   try {
     const csvWriter = createCsvWriter({
       path: "student-schema.csv",
       header: [
-        { id: "name", title: "Name" },
-        { id: "surname", title: "Surname" },
-        { id: "email", title: "Email" },
-        { id: "password", title: "Password" },
-        { id: "studentNumber", title: "Student Number" },
+        { id: "name", title: "name" },
+        { id: "surname", title: "surname" },
+        { id: "email", title: "email" },
+        { id: "password", title: "password" },
+        { id: "studentNumber", title: "studentNumber" },
       ],
     });
     await csvWriter.writeRecords([]);
@@ -27,17 +22,17 @@ router.get("/student-schema", async (req, res) => {
   } catch (error) {
     res.status(400).send(error.message);
   }
-});
+};
 
-router.get("/teacher-schema", async (req, res) => {
+const getTeacherCsv = async (req, res) => {
   try {
     const csvWriter = createCsvWriter({
       path: "teacher-schema.csv",
       header: [
-        { id: "name", title: "Name" },
-        { id: "surname", title: "Surname" },
-        { id: "email", title: "Email" },
-        { id: "password", title: "Password" },
+        { id: "name", title: "name" },
+        { id: "surname", title: "surname" },
+        { id: "email", title: "email" },
+        { id: "password", title: "password" },
       ],
     });
     await csvWriter.writeRecords([]);
@@ -45,37 +40,73 @@ router.get("/teacher-schema", async (req, res) => {
   } catch (error) {
     res.status(400).send(error.message);
   }
-});
+};
 
-router.post("/import-students", upload.single("file"), async (req, res) => {
+const importStudents =  async (req, res) => {
   try {
-    const { file } = req;
-
-    if (!file) {
-      return res.status(400).json({ message: "No file provided" });
-    }
-
-    fs.createReadStream(file.path)
-      .pipe(csv())
-      .on("data", (row) => {
-        const { name, surname, email, password, studentNumber } = row;
+    const file = req.file;
+    const jsonArray = await csvtojson().fromFile(req.file.path);
+    const results = [];
+    const errors = [];
+    for (let i = 0; i < jsonArray.length; i++) {
+      try {
+        const { name, surname, email, password, studentNumber } = jsonArray[i];
         const newUser = new User({
           name,
           surname,
           email,
           password,
           studentNumber,
+          roles: {"Student": 1984},
         });
-        newUser.save();
-      })
-      .on("end", () => {
-        fs.unlinkSync(file.path);
-        res.status(200).json({ message: "User upload completed" });
-      });
-  } catch (error) {
-    console.log(error);
-    res.status(400).send(error.message);
+        await newUser.save();
+        console.log(`User ${name} ${surname} saved to database`);
+        results.push(jsonArray[i]);
+      } catch (err) {
+        console.log(err);
+        errors.push({ line: i + 1, error: err.message });
+      }
+    }
+    res.json({ results, errors });
+    const filePath = path.join(".", "public", "imports", file.filename);
+    fs.unlinkSync(filePath);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
   }
-});
+};
 
-module.exports = router;
+const importTeachers = async (req, res) => {
+  try {
+    const file = req.file;
+    const jsonArray = await csvtojson().fromFile(req.file.path);
+    const results = [];
+    const errors = [];
+    for (let i = 0; i < jsonArray.length; i++) {
+      try {
+        const { name, surname, email, password } = jsonArray[i];
+        const newUser = new User({
+          name,
+          surname,
+          email,
+          password,
+          roles: {"Teacher": 5150},
+        });
+        await newUser.save();
+        console.log(`User ${name} ${surname} saved to database`);
+        results.push(jsonArray[i]);
+      } catch (err) {
+        console.log(err);
+        errors.push({ line: i + 1, error: err.message });
+      }
+    }
+    res.json({ results, errors });
+    const filePath = path.join(".", "public", "imports", file.filename);
+    fs.unlinkSync(filePath);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports = { importTeachers, importStudents, getTeacherCsv, getStudentCsv };
