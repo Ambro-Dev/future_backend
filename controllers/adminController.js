@@ -4,6 +4,7 @@ const csvtojson = require("csvtojson");
 const path = require("path");
 const fs = require("fs");
 const { handleNewUser } = require("./registerController");
+const { createCourseAdmin } = require("./coursesController");
 require("dotenv").config();
 
 const getStudentCsv = async (req, res) => {
@@ -20,6 +21,22 @@ const getStudentCsv = async (req, res) => {
     });
     await csvWriter.writeRecords([]);
     res.download("student-schema.csv");
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
+
+const getCourseCsv = async (req, res) => {
+  try {
+    const csvWriter = createCsvWriter({
+      path: "course-schema.csv",
+      header: [
+        { id: "name", title: "name" },
+        { id: "teacherEmail", title: "teacherEmail" },
+      ],
+    });
+    await csvWriter.writeRecords([]);
+    res.download("course-schema.csv");
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -52,8 +69,10 @@ const importStudents = async (req, res) => {
     for (let i = 0; i < jsonArray.length; i++) {
       try {
         const { name, surname, email, password, studentNumber } = jsonArray[i];
-        const roles = { "Student": 1984 };
-        const { status, message } = await handleNewUser({ body: { name, surname, email, password, studentNumber, roles } });
+        const roles = { Student: 1984 };
+        const { status, message } = await handleNewUser({
+          body: { name, surname, email, password, studentNumber, roles },
+        });
         console.log(message);
         if (status && status === 201) {
           results.push(jsonArray[i]);
@@ -74,8 +93,7 @@ const importStudents = async (req, res) => {
   }
 };
 
-
-const importTeachers = async (req, res) => {
+const importCourses = async (req, res) => {
   try {
     const file = req.file;
     const jsonArray = await csvtojson().fromFile(req.file.path);
@@ -83,17 +101,19 @@ const importTeachers = async (req, res) => {
     const errors = [];
     for (let i = 0; i < jsonArray.length; i++) {
       try {
-        const { name, surname, email, password } = jsonArray[i];
-        const newUser = new User({
-          name,
-          surname,
-          email,
-          password,
-          roles: {"Teacher": 5150},
+        const { name, teacherEmail } = jsonArray[i];
+        console.log(name, teacherEmail);
+        const teacher = await User.findOne({ email: teacherEmail }).exec();
+        console.log(teacher);
+        const { status, message } = await createCourseAdmin({
+          body: { name, teacherId: teacher._id },
         });
-        await newUser.save();
-        console.log(`User ${name} ${surname} saved to database`);
-        results.push(jsonArray[i]);
+        console.log(message);
+        if (status && status === 201) {
+          results.push(jsonArray[i]);
+        } else {
+          errors.push({ line: i + 1, error: message });
+        }
       } catch (err) {
         console.log(err);
         errors.push({ line: i + 1, error: err.message });
@@ -108,4 +128,44 @@ const importTeachers = async (req, res) => {
   }
 };
 
-module.exports = { importTeachers, importStudents, getTeacherCsv, getStudentCsv };
+const importTeachers = async (req, res) => {
+  try {
+    const file = req.file;
+    const jsonArray = await csvtojson().fromFile(req.file.path);
+    const results = [];
+    const errors = [];
+    for (let i = 0; i < jsonArray.length; i++) {
+      try {
+        const { name, surname, email, password } = jsonArray[i];
+        const roles = { Teacher: 5150 };
+        const { status, message } = await handleNewUser({
+          body: { name, surname, email, password, roles },
+        });
+        console.log(message);
+        if (status && status === 201) {
+          results.push(jsonArray[i]);
+        } else {
+          errors.push({ line: i + 1, error: message });
+        }
+      } catch (err) {
+        console.log(err);
+        errors.push({ line: i + 1, error: err.message });
+      }
+    }
+    res.json({ results, errors });
+    const filePath = path.join(".", "public", "imports", file.filename);
+    fs.unlinkSync(filePath);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports = {
+  importTeachers,
+  importStudents,
+  getTeacherCsv,
+  getStudentCsv,
+  getCourseCsv,
+  importCourses,
+};

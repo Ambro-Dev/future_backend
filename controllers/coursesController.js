@@ -10,18 +10,16 @@ const getAllCourses = async (req, res) => {
 };
 
 const createNewCourse = async (req, res) => {
-  if (!req?.body?.name || !req?.body?.teacherId || !req?.body?.description) {
+  if (!req?.body?.name || !req?.body?.teacherId) {
     return res
       .status(400)
       .json({ message: "Name of the course and teacher are required" });
   }
   const teacher = await User.findById(req.body.teacherId);
   if (!teacher) {
-    res
-      .status(400)
-      .json({
-        message: "No such teacher or provided id does not belong to teacher",
-      });
+    res.status(400).json({
+      message: "No such teacher or provided id does not belong to teacher",
+    });
   }
 
   try {
@@ -33,6 +31,34 @@ const createNewCourse = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const createCourseAdmin = async (req, res) => {
+  console.log(req.body);
+  if (!req?.body?.name || !req?.body?.teacherId) {
+    return {
+      status: 400,
+      message: "Name of the course and teacher are required",
+    };
+  }
+  const teacher = await User.findById(req.body.teacherId);
+  if (!teacher) {
+    return {
+      status: 400,
+      message: "No such teacher or provided id does not belong to teacher",
+    };
+  }
+
+  try {
+    const { name, teacherId, description, pic } = req.body;
+    // Create the course in the database
+    const course = await Course.create({ name, teacherId, description, pic });
+
+    return { status: 201, message: `New course ${course} created!` };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, message: "Internal server error" };
   }
 };
 
@@ -53,14 +79,16 @@ const getCourseForEvent = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "Event ID required." });
 
-    const eventId = req.params.id;
-    const course = await Course.findOne({
-      events: { $elemMatch: { _id: eventId } }
-    }).exec();
-    
-    if (!course) {
-      return res.status(204).json({ message: `No course found for event ID ${eventId}` });
-    }
+  const eventId = req.params.id;
+  const course = await Course.findOne({
+    events: { $elemMatch: { _id: eventId } },
+  }).exec();
+
+  if (!course) {
+    return res
+      .status(204)
+      .json({ message: `No course found for event ID ${eventId}` });
+  }
   res.json(course);
 };
 
@@ -177,5 +205,6 @@ module.exports = {
   getCourseTeacher,
   getAllTeacherCourses,
   getCourseForEvent,
-  deleteCourse
+  deleteCourse,
+  createCourseAdmin,
 };
