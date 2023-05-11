@@ -183,6 +183,47 @@ const getAllCourseMembers = async (req, res) => {
   }
 };
 
+const removeCourseMembers = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const memberIds = req.body.memberIds;
+
+    const course = await Course.findById(courseId);
+
+    // Remove the specified members from the course's members array
+    const updatedMembers = course.members.filter(
+      (member) => !memberIds.includes(member)
+    );
+    course.members = updatedMembers;
+
+    await course.save();
+
+    res.json({ message: "Members removed from course" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const addCourseMembers = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const memberIds = req.body.memberIds;
+
+    const course = await Course.findById(courseId);
+
+    // Add the specified members to the course's members array
+    course.members.push(...memberIds);
+
+    await course.save();
+
+    res.json({ message: "Members added to course" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const deleteCourse = async (req, res) => {
   if (!req?.body?.id)
     return res.status(400).json({ message: "Course ID required" });
@@ -207,4 +248,6 @@ module.exports = {
   getCourseForEvent,
   deleteCourse,
   createCourseAdmin,
+  removeCourseMembers,
+  addCourseMembers,
 };

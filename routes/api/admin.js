@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ROLES_LIST = require("../../config/roles_list");
 const adminController = require("../../controllers/adminController");
+const coursesController = require("../../controllers/coursesController");
 const usersController = require("../../controllers/usersController");
 const multer = require("multer");
 
@@ -56,5 +57,10 @@ router
 router
   .route("/users")
   .get(verifyRoles(ROLES_LIST.Admin), usersController.getAllUsersforAdmin);
+
+router
+  .route("/:id/members")
+  .put(verifyRoles(ROLES_LIST.Admin), coursesController.addCourseMembers)
+  .post(verifyRoles(ROLES_LIST.Admin), coursesController.removeCourseMembers);
 
 module.exports = router;
