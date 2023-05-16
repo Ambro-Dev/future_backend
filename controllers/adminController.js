@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const { handleNewUser } = require("./registerController");
 const { createCourseAdmin } = require("./coursesController");
+const Course = require("../model/Course");
 require("dotenv").config();
 
 const getStudentCsv = async (req, res) => {
@@ -58,6 +59,25 @@ const getTeacherCsv = async (req, res) => {
   } catch (error) {
     res.status(400).send(error.message);
   }
+};
+
+const getCourses = async (req, res) => {
+  const userId = req.params.id;
+
+  // Find all the groups that the student is in
+  const user = await User.findById(userId);
+
+  const courses = await Course.find({
+    members: { $nin: user._id },
+  })
+    .populate("teacherId", "_id name surname")
+    .populate({
+      path: "members",
+      select: "_id name surname studentNumber",
+    })
+    .select("_id name teacherId");
+  if (!courses) return res.status(204).json({ message: "No courses found." });
+  res.json(courses);
 };
 
 const importStudents = async (req, res) => {
@@ -168,4 +188,5 @@ module.exports = {
   getStudentCsv,
   getCourseCsv,
   importCourses,
+  getCourses,
 };

@@ -47,6 +47,10 @@ router
   .get(verifyRoles(ROLES_LIST.Admin), adminController.getTeacherCsv);
 
 router
+  .route("/:id/courses")
+  .get(verifyRoles(ROLES_LIST.Admin), adminController.getCourses);
+
+router
   .route("/courses-schema")
   .get(verifyRoles(ROLES_LIST.Admin), adminController.getCourseCsv);
 
