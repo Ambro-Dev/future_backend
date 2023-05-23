@@ -225,15 +225,15 @@ const addCourseMembers = async (req, res) => {
 };
 
 const deleteCourse = async (req, res) => {
-  if (!req?.body?.id)
+  if (!req?.params?.id)
     return res.status(400).json({ message: "Course ID required" });
-  const course = await Course.findOne({ _id: req.body.id }).exec();
+  const course = await Course.findOne({ _id: req.params.id }).exec();
   if (!course) {
     return res
       .status(204)
-      .json({ message: `Course ID ${req.body.id} not found` });
+      .json({ message: `Course ID ${req.params.id} not found` });
   }
-  const result = await course.deleteOne({ _id: req.body.id });
+  const result = await course.deleteOne({ _id: req.params.id });
   res.json(result);
 };
 

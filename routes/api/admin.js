@@ -67,4 +67,8 @@ router
   .put(verifyRoles(ROLES_LIST.Admin), coursesController.addCourseMembers)
   .post(verifyRoles(ROLES_LIST.Admin), coursesController.removeCourseMembers);
 
+router
+  .route("/delete-course/:id")
+  .delete(verifyRoles(ROLES_LIST.Admin), coursesController.deleteCourse);
+
 module.exports = router;
