@@ -4,7 +4,7 @@ const csvtojson = require("csvtojson");
 const path = require("path");
 const fs = require("fs");
 const { handleNewUser } = require("./registerController");
-const { createCourseAdmin } = require("./coursesController");
+const { createCourseAdmin, addCourseMembers } = require("./coursesController");
 const Course = require("../model/Course");
 require("dotenv").config();
 
@@ -61,6 +61,19 @@ const getTeacherCsv = async (req, res) => {
   }
 };
 
+const getImportMembersCsv = async (req, res) => {
+  try {
+    const csvWriter = createCsvWriter({
+      path: "import-members.csv",
+      header: [{ id: "studentNumber", title: "studentNumber" }],
+    });
+    await csvWriter.writeRecords([]);
+    res.download("import-members.csv");
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
+
 const getCourses = async (req, res) => {
   const userId = req.params.id;
 
@@ -92,6 +105,38 @@ const importStudents = async (req, res) => {
         const roles = { Student: 1984 };
         const { status, message } = await handleNewUser({
           body: { name, surname, email, password, studentNumber, roles },
+        });
+        console.log(message);
+        if (status && status === 201) {
+          results.push(jsonArray[i]);
+        } else {
+          errors.push({ line: i + 1, error: message });
+        }
+      } catch (err) {
+        console.log(err);
+        errors.push({ line: i + 1, error: err.message });
+      }
+    }
+    res.json({ results, errors });
+    const filePath = path.join(".", "public", "imports", file.filename);
+    fs.unlinkSync(filePath);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const importMembers = async (req, res) => {
+  try {
+    const file = req.file;
+    const jsonArray = await csvtojson().fromFile(req.file.path);
+    const results = [];
+    const errors = [];
+    for (let i = 0; i < jsonArray.length; i++) {
+      try {
+        const { id } = jsonArray[i];
+        const { status, message } = await addCourseMembers({
+          body: { membersIds: id },
         });
         console.log(message);
         if (status && status === 201) {
@@ -189,4 +234,6 @@ module.exports = {
   getCourseCsv,
   importCourses,
   getCourses,
+  getImportMembersCsv,
+  importMembers,
 };

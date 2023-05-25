@@ -71,4 +71,20 @@ router
   .route("/delete-course/:id")
   .delete(verifyRoles(ROLES_LIST.Admin), coursesController.deleteCourse);
 
+router
+  .route("/import-members/schema")
+  .get(verifyRoles(ROLES_LIST.Admin), adminController.getImportMembersCsv);
+
+router
+  .route("/students")
+  .get(verifyRoles(ROLES_LIST.Admin), usersController.getAllStudents);
+
+router
+  .route("/import-members")
+  .post(
+    verifyRoles(ROLES_LIST.Admin),
+    uploads.single("file"),
+    adminController.importMembers
+  );
+
 module.exports = router;
