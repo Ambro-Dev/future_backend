@@ -80,7 +80,7 @@ router
   .get(verifyRoles(ROLES_LIST.Admin), usersController.getAllStudents);
 
 router
-  .route("/import-members")
+  .route("/import-members/:id")
   .post(
     verifyRoles(ROLES_LIST.Admin),
     uploads.single("file"),

@@ -4,7 +4,7 @@ const csvtojson = require("csvtojson");
 const path = require("path");
 const fs = require("fs");
 const { handleNewUser } = require("./registerController");
-const { createCourseAdmin, addCourseMembers } = require("./coursesController");
+const { createCourseAdmin } = require("./coursesController");
 const Course = require("../model/Course");
 require("dotenv").config();
 
@@ -126,17 +126,43 @@ const importStudents = async (req, res) => {
   }
 };
 
+const addCourseMembers = async (req, res) => {
+  try {
+    const courseId = req.body.id;
+    const userId = [req.body.user];
+
+    const course = await Course.findById(courseId);
+
+    // Add the specified members to the course's members array
+    course.members.push(...userId);
+
+    await course.save();
+
+    return { status: 201, message: "Members added to course" };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, message: "Server error" };
+  }
+};
+
 const importMembers = async (req, res) => {
   try {
+    const course = req.params.id;
+    if (!course) {
+      return { status: 409, message: "No course ID" };
+    }
     const file = req.file;
     const jsonArray = await csvtojson().fromFile(req.file.path);
     const results = [];
     const errors = [];
     for (let i = 0; i < jsonArray.length; i++) {
       try {
-        const { id } = jsonArray[i];
+        const { studentNumber } = jsonArray[i];
+        const user = await User.findOne({
+          studentNumber: studentNumber,
+        }).exec();
         const { status, message } = await addCourseMembers({
-          body: { membersIds: id },
+          body: { id: course, user: user._id },
         });
         console.log(message);
         if (status && status === 201) {
