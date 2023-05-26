@@ -80,6 +80,10 @@ router
   .get(verifyRoles(ROLES_LIST.Admin), usersController.getAllStudents);
 
 router
+  .route("/change-password")
+  .post(verifyRoles(ROLES_LIST.Admin), adminController.passwordChange);
+
+router
   .route("/import-members/:id")
   .post(
     verifyRoles(ROLES_LIST.Admin),

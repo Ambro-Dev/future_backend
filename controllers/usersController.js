@@ -2,6 +2,7 @@ const User = require("../model/User");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const bcrypt = require("bcrypt");
 
 const getAllUsers = async (req, res) => {
   const users = await User.find({ "roles.Admin": { $exists: false } }).select(
@@ -135,6 +136,35 @@ const uploadProfilePicture = async (req, res, err) => {
   });
 };
 
+const passwordChange = async (req, res) => {
+  const { id, currentPassword, newPassword } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findById(id).exec();
+    if (!user) {
+      return { status: 404, message: "User not found." };
+    }
+
+    // Compare the current password with the one stored in the database
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatch) {
+      return { status: 401, message: "Incorrect current password." };
+    }
+
+    // Encrypt the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return { status: 200, message: "Password changed successfully." };
+  } catch (err) {
+    return { status: 500, message: err.message };
+  }
+};
+
 module.exports = {
   getAllUsers,
   deleteUser,
@@ -143,5 +173,5 @@ module.exports = {
   getAllStudents,
   getAllTeachers,
   updateAllPicture,
-  getAllUsersforAdmin
+  getAllUsersforAdmin,
 };

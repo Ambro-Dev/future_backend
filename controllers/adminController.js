@@ -3,6 +3,7 @@ const User = require("../model/User");
 const csvtojson = require("csvtojson");
 const path = require("path");
 const fs = require("fs");
+const bcrypt = require("bcrypt");
 const { handleNewUser } = require("./registerController");
 const { createCourseAdmin } = require("./coursesController");
 const Course = require("../model/Course");
@@ -129,16 +130,20 @@ const importStudents = async (req, res) => {
 const addCourseMembers = async (req, res) => {
   try {
     const courseId = req.body.id;
-    const userId = [req.body.user];
+    const userId = req.body.user;
 
     const course = await Course.findById(courseId);
 
-    // Add the specified members to the course's members array
-    course.members.push(...userId);
+    if (course.members.includes(userId)) {
+      return { status: 409, message: "User is already a member of the course" };
+    }
+
+    // Add the specified member to the course's members array
+    course.members.push(userId);
 
     await course.save();
 
-    return { status: 201, message: "Members added to course" };
+    return { status: 201, message: "Member added to the course" };
   } catch (err) {
     console.error(err);
     return { status: 500, message: "Server error" };
@@ -252,6 +257,33 @@ const importTeachers = async (req, res) => {
   }
 };
 
+const passwordChange = async (req, res) => {
+  const { id, newPassword } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await User.findById(id).exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const passwordMatch = await bcrypt.compare(newPassword, user.password);
+    if (passwordMatch) {
+      return res.status(401).json({ message: "Current password is the same" });
+    }
+    // Encrypt the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   importTeachers,
   importStudents,
@@ -262,4 +294,5 @@ module.exports = {
   getCourses,
   getImportMembersCsv,
   importMembers,
+  passwordChange,
 };
