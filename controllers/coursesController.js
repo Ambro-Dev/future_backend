@@ -191,14 +191,11 @@ const removeCourseMembers = async (req, res) => {
     const course = await Course.findById(courseId);
 
     // Remove the specified members from the course's members array
-    const updatedMembers = course.members.filter(
-      (member) => !memberIds.includes(member)
-    );
-    course.members = updatedMembers;
+    course.members.pull(...memberIds);
 
     await course.save();
 
-    res.json({ message: "Members removed from course" });
+    res.status(200).json({ message: "Members removed from course" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -220,7 +217,7 @@ const addCourseMembers = async (req, res) => {
     res.json({ message: "Members added to course" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
