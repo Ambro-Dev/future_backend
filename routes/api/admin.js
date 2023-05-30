@@ -84,6 +84,14 @@ router
   .post(verifyRoles(ROLES_LIST.Admin), adminController.passwordChange);
 
 router
+  .route("/:id/remove-courses")
+  .put(verifyRoles(ROLES_LIST.Admin), adminController.removeUserFromCourses);
+
+router
+  .route("/:id/add-courses")
+  .put(verifyRoles(ROLES_LIST.Admin), adminController.addUserToCourses);
+
+router
   .route("/import-members/:id")
   .post(
     verifyRoles(ROLES_LIST.Admin),

@@ -257,6 +257,40 @@ const importTeachers = async (req, res) => {
   }
 };
 
+const removeUserFromCourses = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const courses = req.body.courses;
+
+    await Course.updateMany(
+      { _id: { $in: courses } },
+      { $pull: { members: userId } }
+    );
+
+    res.status(200).json({ message: "User removed from courses" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const addUserToCourses = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const courses = req.body.courses;
+
+    await Course.updateMany(
+      { _id: { $in: courses } },
+      { $addToSet: { members: userId } }
+    );
+
+    res.status(200).json({ message: "User added to courses" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const passwordChange = async (req, res) => {
   const { id, newPassword } = req.body;
 
@@ -295,4 +329,6 @@ module.exports = {
   getImportMembersCsv,
   importMembers,
   passwordChange,
+  removeUserFromCourses,
+  addUserToCourses,
 };
