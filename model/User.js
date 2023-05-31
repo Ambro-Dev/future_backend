@@ -12,7 +12,7 @@ const userSchema = new Schema({
   studentNumber: {
     type: String,
     unique: true,
-    sparse: true 
+    sparse: true,
   },
   email: {
     type: String,
@@ -27,6 +27,7 @@ const userSchema = new Schema({
     Student: Number,
     Teacher: Number,
     Admin: Number,
+    Blocked: Number,
   },
   password: {
     type: String,
@@ -34,7 +35,7 @@ const userSchema = new Schema({
   },
   picture: {
     type: String,
-    default: "796b0db7fe9f9f149e77a3cacc5e42e3.png"
+    default: "796b0db7fe9f9f149e77a3cacc5e42e3.png",
   },
   refreshToken: String,
 });

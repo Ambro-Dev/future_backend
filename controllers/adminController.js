@@ -8,6 +8,8 @@ const { handleNewUser } = require("./registerController");
 const { createCourseAdmin } = require("./coursesController");
 const Course = require("../model/Course");
 require("dotenv").config();
+const { validationResult } = require("express-validator");
+const validator = require("validator");
 
 const getStudentCsv = async (req, res) => {
   try {
@@ -318,6 +320,154 @@ const passwordChange = async (req, res) => {
   }
 };
 
+const blockUser = async (req, res) => {
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "User ID required" });
+
+  const user = await User.findOne({ _id: req.params.id }).exec();
+
+  if (!user) {
+    return res
+      .status(204)
+      .json({ message: `User ID ${req.params.id} not found` });
+  }
+
+  // Check the user's current role and update it accordingly
+  if (user.roles.Student) {
+    user.roles = { Blocked: 4004, Student: user.roles.Student };
+  } else if (user.roles.Teacher) {
+    user.roles = { Blocked: 4004, Teacher: user.roles.Teacher };
+  } else if (user.roles.Admin) {
+    user.roles = { Blocked: 4004, Teacher: user.roles.Admin };
+  }
+  await user.save();
+
+  console.log(user);
+
+  return res.status(200).json({ message: "User blocked successfully" });
+};
+
+const unblockUser = async (req, res) => {
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "User ID required" });
+
+  const user = await User.findOne({ _id: req.params.id }).exec();
+
+  if (!user) {
+    return res
+      .status(204)
+      .json({ message: `User ID ${req.params.id} not found` });
+  }
+
+  // Check the user's current role and update it accordingly
+  if (user.roles.Student) {
+    user.roles = { User: 2001, Student: user.roles.Student };
+  } else if (user.roles.Teacher) {
+    user.roles = { User: 2001, Teacher: user.roles.Teacher };
+  } else if (user.roles.Admin) {
+    user.roles = { User: 2001, Teacher: user.roles.Admin };
+  }
+  await user.save();
+
+  console.log(user);
+
+  return res.status(200).json({ message: "User unblocked successfully" });
+};
+
+const handleUserUpdate = async (req, res) => {
+  console.log(req.body);
+  const { id, email, name, surname, studentNumber } = req.body;
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array() });
+  }
+
+  try {
+    const user = await User.findOne({ _id: id }).exec();
+
+    if (!user) {
+      return res.status(404).json({ message: `User with ID ${id} not found` });
+    }
+
+    // Update user properties if provided
+    if (email) {
+      const duplicateEmail = await User.findOne({ email: email }).exec();
+      if (duplicateEmail && duplicateEmail._id.toString() !== id) {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+      if (!validator.isEmail(email)) {
+        return res.status(400).json({ message: "Invalid email address" });
+      }
+      user.email = email;
+    }
+
+    if (name) {
+      user.name = name;
+    }
+
+    if (surname) {
+      user.surname = surname;
+    }
+
+    if (studentNumber) {
+      user.studentNumber = studentNumber;
+    }
+
+    await user.save();
+
+    return res
+      .status(200)
+      .json({
+        message: `User ${user.name} ${user.surname} updated successfully`,
+      });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+const handleCourseUpdate = async (req, res) => {
+  console.log(req.body);
+  const { id, name, description, teacherId } = req.body;
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array() });
+  }
+
+  try {
+    const course = await Course.findOne({ _id: id }).exec();
+
+    if (!course) {
+      return res
+        .status(404)
+        .json({ message: `Course with ID ${id} not found` });
+    }
+
+    // Update course properties if provided
+
+    if (name) {
+      course.name = name;
+    }
+
+    if (description) {
+      course.description = description;
+    }
+
+    if (teacherId) {
+      course.teacherId = teacherId;
+    }
+
+    await course.save();
+
+    return res
+      .status(200)
+      .json({ message: `Course ${course.name} updated successfully` });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   importTeachers,
   importStudents,
@@ -331,4 +481,8 @@ module.exports = {
   passwordChange,
   removeUserFromCourses,
   addUserToCourses,
+  blockUser,
+  unblockUser,
+  handleUserUpdate,
+  handleCourseUpdate,
 };

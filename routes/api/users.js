@@ -7,8 +7,7 @@ const coursesController = require("../../controllers/coursesController");
 
 router
   .route("/")
-  .get(verifyRoles(ROLES_LIST.User), usersController.getAllUsers)
-  .delete(verifyRoles(ROLES_LIST.User), usersController.deleteUser);
+  .get(verifyRoles(ROLES_LIST.User), usersController.getAllUsers);
 
 router
   .route("/teachers")

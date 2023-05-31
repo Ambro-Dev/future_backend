@@ -63,6 +63,14 @@ router
   .get(verifyRoles(ROLES_LIST.Admin), usersController.getAllUsersforAdmin);
 
 router
+  .route("/users/change-user")
+  .put(verifyRoles(ROLES_LIST.Admin), adminController.handleUserUpdate);
+
+router
+  .route("/courses/change-course")
+  .put(verifyRoles(ROLES_LIST.Admin), adminController.handleCourseUpdate);
+
+router
   .route("/:id/members")
   .put(verifyRoles(ROLES_LIST.Admin), coursesController.addCourseMembers)
   .post(verifyRoles(ROLES_LIST.Admin), coursesController.removeCourseMembers);
@@ -86,6 +94,14 @@ router
 router
   .route("/:id/remove-courses")
   .put(verifyRoles(ROLES_LIST.Admin), adminController.removeUserFromCourses);
+
+router
+  .route("/:id/block-user")
+  .put(verifyRoles(ROLES_LIST.Admin), adminController.blockUser);
+
+router
+  .route("/:id/unblock-user")
+  .put(verifyRoles(ROLES_LIST.Admin), adminController.unblockUser);
 
 router
   .route("/:id/add-courses")
