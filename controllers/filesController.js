@@ -1,27 +1,27 @@
 // the code currently active in the demo,
 // sends back the id of the uploaded image, so the front-end can
 // display the uploaded image and a link to open it in a new tab
-const mongoose = require('mongoose');
-const { GridFsStorage } = require('multer-gridfs-storage');
-const router = require('express').Router();
-const multer = require('multer');
-const crypto = require('crypto');
-const path = require('path');
-const User = require('../model/User');
-const Course = require('../model/Course');
-require('dotenv').config();
+const mongoose = require("mongoose");
+const { GridFsStorage } = require("multer-gridfs-storage");
+const router = require("express").Router();
+const multer = require("multer");
+const crypto = require("crypto");
+const path = require("path");
+const User = require("../model/User");
+const Course = require("../model/Course");
+require("dotenv").config();
 
 const mongoURI = process.env.DATABASE_URI;
 const conn = mongoose.createConnection(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  dbName: process.env.DB_NAME
+  dbName: process.env.DB_NAME,
 });
 
 let gfs;
-conn.once('open', () => {
+conn.once("open", () => {
   gfs = new mongoose.mongo.GridFSBucket(conn.db, {
-    bucketName: 'courseFiles',
+    bucketName: "courseFiles",
   });
 });
 
@@ -38,13 +38,13 @@ const storage = new GridFsStorage({
         }
         // turn the random bytes into a string and add the file extention at the end of it (.png or .jpg)
         // this way our file names will not collide if someone uploads the same file twice
-        const filename = buf.toString('hex') + path.extname(file.originalname);
+        const filename = buf.toString("hex") + path.extname(file.originalname);
         const fileInfo = {
           filename: filename,
-          bucketName: 'courseFiles',
+          bucketName: "courseFiles",
           metadata: {
-            originalFilename: file.originalname // add original filename as metadata
-          }
+            originalFilename: file.originalname, // add original filename as metadata
+          },
         };
         // resolve these properties so they will be added to the new file document
         resolve(fileInfo);
@@ -64,7 +64,7 @@ function checkFileType(file, cb) {
   // if both are good then continue
   if (mimetype && extname) return cb(null, true);
   // otherwise, return error message
-  cb('filetype');
+  cb("filetype");
 }
 
 // set up our multer to use the gridfs storage defined above
@@ -82,10 +82,10 @@ const uploadMiddleware = (req, res, next) => {
   const upload = store.single("file");
   upload(req, res, function (err) {
     if (err instanceof multer.MulterError) {
-      return res.status(400).send('File too large');
+      return res.status(400).send("File too large");
     } else if (err) {
       // check if our filetype error occurred
-      if (err === 'filetype') return res.status(400).send('Invalid file type');
+      if (err === "filetype") return res.status(400).send("Invalid file type");
       // An unknown error occurred when uploading.
       return res.sendStatus(500);
     }
@@ -94,13 +94,14 @@ const uploadMiddleware = (req, res, next) => {
   });
 };
 
-router.post('/:courseId/upload', uploadMiddleware, async (req, res) => {
+router.post("/:courseId/upload", uploadMiddleware, async (req, res) => {
   try {
     const { file } = req;
     console.log(req.params.courseId);
-    if (file.size > 1000000) { // 1mb
+    if (file.size > 1000000) {
+      // 1mb
       // if the file is too large, delete it and send an error
-      return res.status(400).send('file may not exceed 1mb');
+      return res.status(400).send("file may not exceed 1mb");
     }
     const course = await Course.findByIdAndUpdate(
       req.params.courseId,
@@ -108,27 +109,22 @@ router.post('/:courseId/upload', uploadMiddleware, async (req, res) => {
       { new: true }
     );
     if (!course) {
-      return res.status(404).send('Course not found');
+      return res.status(404).send("Course not found");
     }
     res.status(200).json({
-      message: 'File uploaded successfully',
+      message: "File uploaded successfully",
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
-
-// this route will be accessed by any img tags on the front end which have
-// src tags like
-// <img src="/api/image/123456789" alt="example"/>
-// <img src={`/api/image/${user.profilePic}`} alt="example"/>
-router.get('/:courseId', async (req, res) => {
+router.get("/:courseId", async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({ message: "Course not found" });
     }
 
     const fileIds = course.files;
@@ -136,68 +132,101 @@ router.get('/:courseId', async (req, res) => {
     for (const fileId of fileIds) {
       const file = await gfs.find({ _id: fileId }).toArray();
       if (file.length === 0) {
-        return res.status(404).json({ message: 'File not found' });
+        return res.status(404).json({ message: "File not found" });
       }
       files.push({
         filename: file[0].filename,
-        originalname: file[0].metadata.originalFilename // retrieve original filename from metadata
+        originalname: file[0].metadata.originalFilename, // retrieve original filename from metadata
       });
     }
     res.json(files);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
+router.get("/", async (req, res) => {
+  try {
+    const files = await gfs.find().toArray();
 
-router.get('/users/picture', async (req, res) => {
+    if (files.length === 0) {
+      return res.status(404).json({ message: "No files found" });
+    }
+
+    let totalDiskSpace = 0;
+    const filesData = [];
+
+    for (const file of files) {
+      const fileSizeKB = Math.round(file.length / 1024);
+      filesData.push({
+        filename: file.filename,
+        originalname: file.metadata.originalFilename,
+        fileSize: fileSizeKB,
+      });
+
+      totalDiskSpace += fileSizeKB;
+    }
+
+    res.json({
+      files: filesData,
+      totalDiskSpace,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
+});
+
+router.get("/users/picture", async (req, res) => {
   try {
     const user = await Course.findById(req.params.userId);
     if (!user || !user.picture) {
-      return res.status(404).send('Picture not found');
+      return res.status(404).send("Picture not found");
     }
     gfs.find({ filename: user.picture }).toArray((err, file) => {
       if (!file || file.length === 0) {
-        return res.status(404).send('Picture not found');
+        return res.status(404).send("Picture not found");
       }
       const readstream = gfs.openDownloadStreamByName(user.picture);
       readstream.pipe(res);
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
 const deleteFile = (id) => {
-  if (!id || id === 'undefined') return res.status(400).send('no image id');
+  if (!id || id === "undefined") return res.status(400).send("no image id");
   const _id = new mongoose.Types.ObjectId(id);
   gfs.delete(_id, (err) => {
-    if (err) return res.status(500).send('image deletion error');
+    if (err) return res.status(500).send("image deletion error");
   });
 };
 
-router.get('/file/:filename', (req, res) => {
-  gfs.find({ filename: req.params.filename })
-    .toArray((err, files) => {
-      if (err) {
-        return res.status(500).json({
-          message: 'Error retrieving file',
-        });
-      }
+router.get("/file/:filename", (req, res) => {
+  gfs.find({ filename: req.params.filename }).toArray((err, files) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Error retrieving file",
+      });
+    }
 
-      if (!files || files.length === 0) {
-        return res.status(404).json({
-          message: 'File not found',
-        });
-      }
+    if (!files || files.length === 0) {
+      return res.status(404).json({
+        message: "File not found",
+      });
+    }
 
-      const readstream = gfs.openDownloadStreamByName(req.params.filename);
-      res.set('Content-Type', files[0].contentType);
-      res.set('Content-Disposition', 'attachment; filename="' + files[0].filename + '"');
-      readstream.pipe(res);
-    });
+    const readstream = gfs.openDownloadStreamByName(req.params.filename);
+    res.set("Content-Type", files[0].contentType);
+    res.set(
+      "Content-Disposition",
+      'attachment; filename="' + files[0].filename + '"'
+    );
+    readstream.pipe(res);
+  });
 });
 
 module.exports = router;

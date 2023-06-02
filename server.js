@@ -95,9 +95,6 @@ connection.once("open", () => {
   http.listen(PORT, () => {
     console.log(`HTTP server listening on port ${PORT}`);
   });
-  const gfs = Grid(connection.db, mongoose.mongo);
-  gfs.collection = "uploads";
-  module.exports.gfs = gfs;
 });
 
 const users = {};

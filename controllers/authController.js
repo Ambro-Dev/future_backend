@@ -1,6 +1,13 @@
 const User = require("../model/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
+
+const loginCountSchema = new mongoose.Schema({
+  date: { type: Date, unique: true },
+  count: { type: Number, default: 0 },
+});
+const LoginCount = mongoose.model("LoginCount", loginCountSchema);
 
 const handleLogin = async (req, res) => {
   const { email, password } = req.body;
@@ -47,6 +54,24 @@ const handleLogin = async (req, res) => {
       sameSite: "None",
       maxAge: 24 * 60 * 60 * 1000,
     });
+
+    const currentDate = new Date();
+    const truncatedDate = new Date(currentDate.toDateString());
+
+    LoginCount.findOneAndUpdate(
+      { date: truncatedDate },
+      { $inc: { count: 1 } },
+      { upsert: true, new: true },
+      (err, countDoc) => {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log(
+            `Updated login count for ${countDoc.date}: ${countDoc.count}`
+          );
+        }
+      }
+    );
 
     // Send authorization roles and access token to user
     res.json({ id, name, surname, roles, studentNumber, accessToken, picture });
