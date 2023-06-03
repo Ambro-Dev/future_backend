@@ -9,6 +9,18 @@ const getAllCourses = async (req, res) => {
   res.json(courses);
 };
 
+const getCourses = async (req, res) => {
+  const courses = await Course.find()
+    .populate("teacherId", "name surname")
+    .populate({
+      path: "members",
+      select: "studentNumber",
+    })
+    .select("name teacherId events");
+  if (!courses) return res.status(204).json({ message: "No courses found." });
+  res.json(courses);
+};
+
 const createNewCourse = async (req, res) => {
   if (!req?.body?.name || !req?.body?.teacherId) {
     return res
@@ -247,4 +259,5 @@ module.exports = {
   createCourseAdmin,
   removeCourseMembers,
   addCourseMembers,
+  getCourses,
 };

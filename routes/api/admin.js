@@ -104,6 +104,10 @@ router
   .put(verifyRoles(ROLES_LIST.Admin), adminController.unblockUser);
 
 router
+  .route("/courses/all")
+  .get(verifyRoles(ROLES_LIST.Admin), coursesController.getCourses);
+
+router
   .route("/:id/add-courses")
   .put(verifyRoles(ROLES_LIST.Admin), adminController.addUserToCourses);
 
