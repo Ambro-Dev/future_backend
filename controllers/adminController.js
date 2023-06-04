@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const { handleNewUser } = require("./registerController");
 const { createCourseAdmin } = require("./coursesController");
 const Course = require("../model/Course");
+const LoginCount = require("../model/LoginCount");
 require("dotenv").config();
 const { validationResult } = require("express-validator");
 const validator = require("validator");
@@ -416,11 +417,9 @@ const handleUserUpdate = async (req, res) => {
 
     await user.save();
 
-    return res
-      .status(200)
-      .json({
-        message: `User ${user.name} ${user.surname} updated successfully`,
-      });
+    return res.status(200).json({
+      message: `User ${user.name} ${user.surname} updated successfully`,
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -468,6 +467,18 @@ const handleCourseUpdate = async (req, res) => {
   }
 };
 
+const countLogins = async (req, res) => {
+  try {
+    const logins = await LoginCount.find()
+      .sort({ _id: -1 }) // Sort in descending order based on the _id field
+      .limit(7)
+      .exec(); // Limit the number of results to 7
+    return res.json(logins);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   importTeachers,
   importStudents,
@@ -485,4 +496,5 @@ module.exports = {
   unblockUser,
   handleUserUpdate,
   handleCourseUpdate,
+  countLogins,
 };

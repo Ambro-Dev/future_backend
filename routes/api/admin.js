@@ -108,6 +108,10 @@ router
   .get(verifyRoles(ROLES_LIST.Admin), coursesController.getCourses);
 
 router
+  .route("/login-count")
+  .get(verifyRoles(ROLES_LIST.Admin), adminController.countLogins);
+
+router
   .route("/:id/add-courses")
   .put(verifyRoles(ROLES_LIST.Admin), adminController.addUserToCourses);
 

@@ -1,13 +1,7 @@
 const User = require("../model/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
-
-const loginCountSchema = new mongoose.Schema({
-  date: { type: Date, unique: true },
-  count: { type: Number, default: 0 },
-});
-const LoginCount = mongoose.model("LoginCount", loginCountSchema);
+const LoginCount = require("../model/LoginCount");
 
 const handleLogin = async (req, res) => {
   const { email, password } = req.body;
@@ -45,7 +39,7 @@ const handleLogin = async (req, res) => {
     );
     // Saving refreshToken with current user
     foundUser.refreshToken = refreshToken;
-    const result = await foundUser.save();
+    await foundUser.save();
 
     // Creates Secure Cookie with refresh token
     res.cookie("jwt", refreshToken, {
