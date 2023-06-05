@@ -50,7 +50,15 @@ const handleLogin = async (req, res) => {
     });
 
     const currentDate = new Date();
-    const truncatedDate = new Date(currentDate.toDateString());
+    const truncatedDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      currentDate.getDate(),
+      8,
+      0,
+      0,
+      0
+    );
 
     LoginCount.findOneAndUpdate(
       { date: truncatedDate },
