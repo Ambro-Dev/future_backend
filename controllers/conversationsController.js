@@ -9,7 +9,11 @@ const createConversation = async (req, res) => {
     const conversation = await Conversation.create({ name, members });
     await conversation.save();
 
-    res.json(conversation);
+    const newConversation = await Conversation.findById(conversation._id)
+      .populate("members", "_id name surname picture")
+      .exec();
+
+    res.json(newConversation);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -42,7 +46,6 @@ const getAllConversations = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 module.exports = {
   getUserConversation,

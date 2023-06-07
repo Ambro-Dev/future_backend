@@ -120,12 +120,14 @@ io.on("connection", (socket) => {
 
   socket.on("join-conversation", async (conversationId) => {
     // Join the user to the conversation\
-    socket.join(conversationId);
-    console.log(`User joined conversation ${conversationId}`);
+    if (conversationId) {
+      socket.join(conversationId);
+      console.log(`User joined conversation ${conversationId}`);
 
-    const conversation = await Conversation.findById(conversationId);
-    const messages = conversation.messages;
-    io.to(conversationId).emit("conversation-messages", messages);
+      const conversation = await Conversation.findById(conversationId);
+      const messages = conversation.messages;
+      io.to(conversationId).emit("conversation-messages", messages);
+    }
   });
 
   socket.on("leave-conversation", ({ conversation }) => {
