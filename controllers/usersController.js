@@ -130,13 +130,13 @@ const passwordChange = async (req, res) => {
     // Find the user by email
     const user = await User.findById(id).exec();
     if (!user) {
-      return { status: 404, message: "User not found." };
+      return res.send({ status: 404, message: "User not found." });
     }
 
     // Compare the current password with the one stored in the database
     const passwordMatch = await bcrypt.compare(currentPassword, user.password);
     if (!passwordMatch) {
-      return { status: 401, message: "Incorrect current password." };
+      return res.send({ status: 401, message: "Incorrect current password." });
     }
 
     // Encrypt the new password
@@ -146,9 +146,9 @@ const passwordChange = async (req, res) => {
     user.password = hashedNewPassword;
     await user.save();
 
-    return { status: 200, message: "Password changed successfully." };
+    return res.send({ status: 200, message: "Password changed successfully." });
   } catch (err) {
-    return { status: 500, message: err.message };
+    return res.status(500).send(err.message);
   }
 };
 
@@ -160,4 +160,5 @@ module.exports = {
   getAllTeachers,
   updateAllPicture,
   getAllUsersforAdmin,
+  passwordChange,
 };

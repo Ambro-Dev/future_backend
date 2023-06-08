@@ -28,6 +28,10 @@ router
   .post(verifyRoles(ROLES_LIST.User), usersController.uploadProfilePicture);
 
 router
+  .route("/change-password")
+  .put(verifyRoles(ROLES_LIST.User), usersController.passwordChange);
+
+router
   .route("/:id/courses")
   .get(
     verifyRoles(ROLES_LIST.Teacher, ROLES_LIST.Student, ROLES_LIST.Admin),
