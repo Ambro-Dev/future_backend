@@ -16,10 +16,16 @@ const resetPassword = async (req, res) => {
 
   console.log(user);
 
-  if (!user)
-    return res.status(401).json({ message: "No user with this email" });
+  if (!user) return res.status(401).json({ error: "No user with this email" });
   // Generate a unique token or URL for password reset
   const resetToken = generateResetToken();
+
+  const expirationTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+  // Store the resetToken and expirationTime and associate them with the user's account
+  user.resetToken = resetToken;
+  user.resetTokenExpiresAt = new Date(expirationTime);
+  await user.save();
 
   // Store the resetToken and associate it with the user's account
   // (e.g., save it in a database or cache)
