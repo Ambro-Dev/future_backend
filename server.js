@@ -12,13 +12,10 @@ const cookieParser = require("cookie-parser");
 const credentials = require("./middleware/credentials");
 const mongoose = require("mongoose");
 const connectDB = require("./config/dbConn");
-const User = require("./model/User");
 const Conversation = require("./model/Conversation");
-const { createEvent } = require("./controllers/eventsController");
 const http = require("http").createServer(app);
 const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
-const adminRoutes = require("./controllers/adminController");
 const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
@@ -26,14 +23,8 @@ const io = require("socket.io")(http, {
     credentials: true,
   },
 });
-const crypto = require("crypto");
-const { GridFsStorage } = require("multer-gridfs-storage");
-const Grid = require("gridfs-stream");
-const methodOverride = require("method-override");
-const multer = require("multer");
 
 const PORT = process.env.PORT || 3500;
-const socketIOPort = process.env.SOCKETIO_PORT || 4000;
 
 // Connect to MongoDB
 connectDB();

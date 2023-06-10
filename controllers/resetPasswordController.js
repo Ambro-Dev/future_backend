@@ -1,15 +1,23 @@
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const User = require("../model/User");
+require("dotenv").config();
 
 function generateResetToken() {
   const token = crypto.randomBytes(32).toString("hex");
   return token;
 }
 
-const resetPassword = (req, res) => {
+const resetPassword = async (req, res) => {
   const { email } = req.body;
   const siteURL = req.headers.origin; // Retrieve the site URL from the request object
 
+  const user = await User.findOne({ email: email }).exec();
+
+  console.log(user);
+
+  if (!user)
+    return res.status(401).json({ message: "No user with this email" });
   // Generate a unique token or URL for password reset
   const resetToken = generateResetToken();
 
@@ -35,8 +43,8 @@ const resetPassword = (req, res) => {
       rejectUnauthorized: false,
     },
     auth: {
-      user: "mailer@office.wsm.warszawa.pl",
-      pass: "=s(k=%K*/<",
+      user: process.env.MAILER_USER,
+      pass: process.env.MAILER_PASSWORD,
     },
     debug: true,
     logger: true,
@@ -46,11 +54,13 @@ const resetPassword = (req, res) => {
     if (error) {
       console.error(error);
       // Handle the error appropriately
-      res.status(500).send("Failed to send password reset email");
+      res.status(500).json({ error: "Failed to send password reset email" });
     } else {
       console.log("Password reset email sent:", info.response);
       // Handle the success response
-      res.status(200).send("Password reset email sent successfully");
+      res
+        .status(200)
+        .json({ message: "Password reset email sent successfully" });
     }
   });
 };
