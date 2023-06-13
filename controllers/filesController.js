@@ -7,9 +7,9 @@ const router = require("express").Router();
 const multer = require("multer");
 const crypto = require("crypto");
 const path = require("path");
-const User = require("../model/User");
 const Course = require("../model/Course");
 require("dotenv").config();
+const iconv = require("iconv-lite");
 
 const mongoURI = process.env.DATABASE_URI;
 const conn = mongoose.createConnection(mongoURI, {
@@ -27,7 +27,11 @@ conn.once("open", () => {
 
 const storage = new GridFsStorage({
   url: mongoURI,
-  options: { useUnifiedTopology: true, dbName: process.env.DB_NAME },
+  options: {
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+    dbName: process.env.DB_NAME,
+  },
   file: (req, file) => {
     // this function runs every time a new file is created
     return new Promise((resolve, reject) => {
@@ -39,11 +43,12 @@ const storage = new GridFsStorage({
         // turn the random bytes into a string and add the file extention at the end of it (.png or .jpg)
         // this way our file names will not collide if someone uploads the same file twice
         const filename = buf.toString("hex") + path.extname(file.originalname);
+        const originalFilename = decodeURIComponent(escape(file.originalname));
         const fileInfo = {
           filename: filename,
           bucketName: "courseFiles",
           metadata: {
-            originalFilename: file.originalname, // add original filename as metadata
+            originalFilename: originalFilename, // add original filename as metadata
           },
         };
         // resolve these properties so they will be added to the new file document
@@ -54,7 +59,6 @@ const storage = new GridFsStorage({
 });
 
 function checkFileType(file, cb) {
-  // https://youtu.be/9Qzmri1WaaE?t=1515
   // define a regex that includes the file types we accept
   const filetypes = /doc|docx|pdf|xlsx|xls|csv|odt|zip|jpg|png|jpeg/;
   //check the file extention
@@ -97,7 +101,6 @@ const uploadMiddleware = (req, res, next) => {
 router.post("/:courseId/upload", uploadMiddleware, async (req, res) => {
   try {
     const { file } = req;
-    console.log(req.params.courseId);
     if (file.size > 1000000) {
       // 1mb
       // if the file is too large, delete it and send an error

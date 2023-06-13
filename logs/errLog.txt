@@ -1,0 +1,14 @@
+20230420	09:28:28	8962fd70-7154-4967-8787-3d0c0fb468d4	Error: ENOENT: no such file or directory, open 'C:\Users\pambr\OneDrive\Dokumenty\Projekty\Gwarant-Service\express_mongodb_jwt\public\imports\student-schema.csv'
+20230420	09:29:05	7b7435f1-afff-43fc-81c3-b74699cd6c66	Error: ENOENT: no such file or directory, open 'C:\Users\pambr\OneDrive\Dokumenty\Projekty\Gwarant-Service\express_mongodb_jwt\public\imports\student-schema.csv'
+20230420	09:30:53	e045e62e-1969-4b3a-922f-e7c10b4ba52a	Error: ENOENT: no such file or directory, open 'C:\Users\pambr\OneDrive\Dokumenty\Projekty\Gwarant-Service\express_mongodb_jwt\public\imports\student-schema.csv'
+20230605	18:56:33	91f3c965-9772-4f7b-8dc4-7803cd045aac	Error: Not allowed by CORS
+20230605	19:03:27	49a5f04c-b698-4405-8cc7-4a1e86a0be14	Error: Not allowed by CORS
+20230605	19:12:54	036fe9be-5651-451b-a703-8b2662b709d2	Error: Not allowed by CORS
+20230605	19:13:46	797e1591-4bfe-42dc-ab8d-59616af6e2ea	Error: Not allowed by CORS
+20230605	19:15:12	b05c324a-3617-4906-ac7a-8d036f4c23d3	Error: Not allowed by CORS
+20230605	19:19:19	7c9aec3c-245e-41ae-95e7-4b013f612906	Error: Not allowed by CORS
+20230605	19:19:52	7a7c3e4f-16f7-4901-9b16-59eb8fb462a8	Error: Not allowed by CORS
+20230605	19:58:20	312c28da-de29-4d85-b2f2-976c5443fadc	Error: Not allowed by CORS
+20230609	14:28:57	b82a8e5e-eeb1-4efa-b106-11611409b05f	ReferenceError: generateResetToken is not defined
+20230613	15:11:45	8224501e-bced-4726-b0e7-cb3a2d7a7e4e	TypeError: Cannot read properties of undefined (reading 'delete')
+20230613	15:19:14	5d6694c8-82e8-489c-a8e2-2a5142fa6353	ReferenceError: file is not defined
