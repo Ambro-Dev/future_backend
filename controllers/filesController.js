@@ -135,6 +135,7 @@ router.get("/:courseId", async (req, res) => {
         return res.status(404).json({ message: "File not found" });
       }
       files.push({
+        id: file[0]._id,
         filename: file[0].filename,
         originalname: file[0].metadata.originalFilename, // retrieve original filename from metadata
       });
@@ -197,13 +198,23 @@ router.get("/users/picture", async (req, res) => {
   }
 });
 
-const deleteFile = (id) => {
-  if (!id || id === "undefined") return res.status(400).send("no image id");
+router.delete("/:id/delete", (req, res) => {
+  const { id } = req.params; // Extract the id from req.params
+  if (!id || id === "undefined")
+    return res.status(400).json({ error: "no file id" });
+
   const _id = new mongoose.Types.ObjectId(id);
   gfs.delete(_id, (err) => {
-    if (err) return res.status(500).send("image deletion error");
+    if (err) return res.status(500).json({ error: "File deletion error" });
+
+    // Delete the file reference from the Course model
+    Course.updateMany({ files: _id }, { $pull: { files: _id } }, (err) => {
+      if (err) return res.status(500).json({ error: "File deletion error" });
+
+      res.status(200).json({ message: "File deleted successfully" });
+    });
   });
-};
+});
 
 router.get("/file/:filename", (req, res) => {
   gfs.find({ filename: req.params.filename }).toArray((err, files) => {

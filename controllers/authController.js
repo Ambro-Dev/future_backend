@@ -30,7 +30,7 @@ const handleLogin = async (req, res) => {
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1m" }
+      { expiresIn: "10m" }
     );
     const refreshToken = jwt.sign(
       { email: foundUser.email },
@@ -63,17 +63,14 @@ const handleLogin = async (req, res) => {
     LoginCount.findOneAndUpdate(
       { date: truncatedDate },
       { $inc: { count: 1 } },
-      { upsert: true, new: true },
-      (err, countDoc) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(
-            `Updated login count for ${countDoc.date}: ${countDoc.count}`
-          );
-        }
-      }
-    );
+      { upsert: true, new: true }
+    )
+      .then((countDoc) => {
+        console.log(
+          `Updated login count for ${countDoc.date}: ${countDoc.count}`
+        );
+      })
+      .catch((err) => console.log(err));
 
     // Send authorization roles and access token to user
     res.json({ id, name, surname, roles, studentNumber, accessToken, picture });

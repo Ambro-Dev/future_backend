@@ -46,6 +46,32 @@ const createNewCourse = async (req, res) => {
   }
 };
 
+const editCourse = async (req, res) => {
+  if (!req?.body?.course) {
+    return res.status(400).json({ message: "ID of the course is required" });
+  }
+  const course = await Course.findById(req.body.course);
+  if (!course) {
+    return res.status(400).json({
+      message: "No such course or provided id does not belong to course",
+    });
+  }
+
+  try {
+    const { description, picture } = req.body;
+
+    if (description) course.description = description;
+    if (picture) course.pic = picture;
+
+    await course.save();
+
+    res.json({ message: "Course changed successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const createCourseAdmin = async (req, res) => {
   console.log(req.body);
   if (!req?.body?.name || !req?.body?.teacherId) {
@@ -260,4 +286,5 @@ module.exports = {
   removeCourseMembers,
   addCourseMembers,
   getCourses,
+  editCourse,
 };

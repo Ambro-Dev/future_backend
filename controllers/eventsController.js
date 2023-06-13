@@ -25,6 +25,47 @@ const createEvent = async (req, res) => {
   }
 };
 
+const deleteEvent = async (req, res) => {
+  try {
+    const courseId = req.body.courseId;
+    const eventId = req.body.eventId;
+
+    // Find the course by ID
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Find the index of the event to be deleted
+    const eventIndex = course.events.findIndex(
+      (event) => event._id.toString() === eventId
+    );
+
+    if (eventIndex === -1) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const exam = await Exam.findOne({ eventId: eventId });
+
+    if (exam) {
+      await exam.remove();
+    }
+
+    // Remove the event from the events array
+    course.events.splice(eventIndex, 1);
+
+    await course.save();
+
+    res.json({ message: "Event deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while deleting the event" });
+  }
+};
+
 const getCourseEvents = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "Course ID required" });
@@ -115,7 +156,6 @@ const getAllExamResultsForUser = async (req, res) => {
   );
   return res.json(examResults);
 };
-
 
 const getAllExamResultsForTeacher = async (req, res) => {
   const teacherId = req.params.id;
@@ -237,4 +277,5 @@ module.exports = {
   saveExamResults,
   getAllExamResultsForUser,
   getAllExamResultsForTeacher,
+  deleteEvent,
 };
