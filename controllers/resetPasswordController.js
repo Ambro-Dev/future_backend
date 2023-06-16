@@ -3,12 +3,17 @@ const crypto = require("crypto");
 const User = require("../model/User");
 require("dotenv").config();
 
+const resetPassword = async (req, res) => {
+  console.log("Reset password");
+};
+
 function generateResetToken() {
   const token = crypto.randomBytes(32).toString("hex");
   return token;
 }
 
-const resetPassword = async (req, res) => {
+// Actual Reset Password function
+const actualResetPassword = async (req, res) => {
   const { email } = req.body;
   const siteURL = req.headers.origin; // Retrieve the site URL from the request object
 

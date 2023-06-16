@@ -124,6 +124,9 @@ const uploadProfilePicture = async (req, res, err) => {
 };
 
 const passwordChange = async (req, res) => {
+  console.log("Password change");
+};
+const actualPasswordChange = async (req, res) => {
   const { id, currentPassword, newPassword } = req.body;
 
   try {

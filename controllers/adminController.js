@@ -295,6 +295,9 @@ const addUserToCourses = async (req, res) => {
 };
 
 const passwordChange = async (req, res) => {
+  console.log("Password change");
+};
+const actualPasswordChange = async (req, res) => {
   const { id, newPassword } = req.body;
 
   try {
@@ -322,6 +325,10 @@ const passwordChange = async (req, res) => {
 };
 
 const blockUser = async (req, res) => {
+  console.log("Block user");
+};
+
+const actualBlockUser = async (req, res) => {
   if (!req?.params?.id)
     return res.status(400).json({ message: "User ID required" });
 
