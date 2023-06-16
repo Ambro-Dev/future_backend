@@ -12,3 +12,4 @@
 20230609	14:28:57	b82a8e5e-eeb1-4efa-b106-11611409b05f	ReferenceError: generateResetToken is not defined
 20230613	15:11:45	8224501e-bced-4726-b0e7-cb3a2d7a7e4e	TypeError: Cannot read properties of undefined (reading 'delete')
 20230613	15:19:14	5d6694c8-82e8-489c-a8e2-2a5142fa6353	ReferenceError: file is not defined
+20230616	12:42:21	edb02e3f-14ee-4296-bee7-1d8da3cde14b	Error: Not allowed by CORS

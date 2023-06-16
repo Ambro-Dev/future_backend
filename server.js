@@ -16,6 +16,8 @@ const Conversation = require("./model/Conversation");
 const http = require("http").createServer(app);
 const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
+const Course = require("./model/Course");
+const User = require("./model/User");
 const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
@@ -89,25 +91,58 @@ connection.once("open", () => {
   });
 });
 
-const users = {};
-
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
-  socket.on("register", (userId) => {
-    users[userId] = socket.id;
+  socket.on("join-call", async (data) => {
+    const { eventId, userId } = data;
+    console.log("User:", userId, "joins event:", eventId);
 
-    for (const otherUserId in users) {
-      if (otherUserId !== userId) {
-        io.to(socket.id).emit("otherUserRegistered", otherUserId);
+    const course = await Course.findOne({
+      "events._id": eventId,
+    }).exec();
+
+    if (course) {
+      const event = course.events.id(eventId);
+      if (event) {
+        event.inCall.push(userId);
+        await course.save();
       }
     }
+  });
 
-    for (const otherUserId in users) {
-      if (otherUserId !== userId) {
-        io.to(users[otherUserId]).emit("otherUserRegistered", userId);
+  socket.on("leave-call", async (data) => {
+    const { eventId, userId } = data;
+    console.log("User:", userId, "leaves event:", eventId);
+
+    const course = await Course.findOne({
+      "events._id": eventId,
+    }).exec();
+
+    if (course) {
+      const event = course.events.id(eventId);
+      if (event) {
+        event.inCall = event.inCall.filter((id) => id.toString() !== userId);
+        await course.save();
       }
     }
+  });
+
+  socket.on("leave-all", async (data) => {
+    const { userId } = data;
+    console.log("User:", userId, "leaves all calls");
+    await Course.updateMany(
+      { "events.inCall": userId },
+      { $pull: { "events.$.inCall": userId } }
+    );
+  });
+
+  socket.on("user-connected", async (userId) => {
+    const user = await User.findById(userId).exec();
+
+    user.socket = socket.id;
+
+    await user.save();
   });
 
   socket.on("join-conversation", async (conversationId) => {
@@ -156,7 +191,20 @@ io.on("connection", (socket) => {
     console.log("User left course:", course);
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async (socket) => {
+    const user = await User.findOne({ socket: socket.id }).exec();
+
+    if (user) {
+      await Course.updateMany(
+        { "events.inCall": user._id },
+        { $pull: { "events.$.inCall": user._id } }
+      );
+
+      user.socket = null;
+
+      await user.save();
+    }
+
     console.log("A user disconnected");
   });
 });

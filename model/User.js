@@ -33,6 +33,9 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+  socket: {
+    type: String,
+  },
   picture: {
     type: String,
     default: "796b0db7fe9f9f149e77a3cacc5e42e3.png",
