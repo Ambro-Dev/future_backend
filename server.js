@@ -18,15 +18,19 @@ const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
 const Course = require("./model/Course");
 const User = require("./model/User");
-const io = require("socket.io")(http, {
+const fs = require("fs");
+const https = require("https");
+const privateKey = fs.readFileSync("/path/to/private_key.pem", "utf8");
+const certificate = fs.readFileSync("/path/to/certificate.pem", "utf8");
+const credentials = { key: privateKey, cert: certificate };
+const httpsServer = https.createServer(credentials, app);
+const io = require("socket.io")(httpsServer, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
-
-const PORT = process.env.PORT || 3500;
 
 // Connect to MongoDB
 connectDB();
@@ -84,10 +88,17 @@ app.use(errorHandler);
 
 const connection = mongoose.connection;
 
+const httpPort = 5000; // Choose the port for HTTP
+const httpsPort = 4443; // Choose the port for HTTPS
+
 connection.once("open", () => {
   console.log("Connected to MongoDB");
-  http.listen(PORT, () => {
-    console.log(`HTTP server listening on port ${PORT}`);
+  http.listen(httpPort, () => {
+    console.log(`HTTP server listening on port ${httpPort}`);
+  });
+
+  httpsServer.listen(httpsPort, () => {
+    console.log(`HTTPS server listening on port ${httpsPort}`);
   });
 });
 
