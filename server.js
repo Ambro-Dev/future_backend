@@ -26,6 +26,7 @@ const io = require("socket.io")(http, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+  path: "/socket",
 });
 
 // Connect to MongoDB
