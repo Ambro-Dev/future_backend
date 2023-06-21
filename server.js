@@ -15,14 +15,17 @@ const http = require("http").createServer(app);
 const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
 //Socket
-const { instrument } = require("@socket.io/admin-ui");
 const Course = require("./model/Course");
 const Conversation = require("./model/Conversation");
 const User = require("./model/User");
 
 const io = require("socket.io")(http, {
   cors: {
-    origin: ["http://localhost:3000", "https://admin.socket.io"],
+    origin: [
+      "http://localhost:3000",
+      "https://future.ambro.dev",
+      "https://www.future.ambro.dev",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -210,9 +213,4 @@ io.on("connection", (socket) => {
 
     console.log("A user disconnected");
   });
-});
-
-instrument(io, {
-  auth: false,
-  mode: "development",
 });
