@@ -1,4 +1,3 @@
-const { instrument } = require("@socket.io/admin-ui");
 require("dotenv").config();
 const express = require("express");
 const app = express();
@@ -12,12 +11,15 @@ const cookieParser = require("cookie-parser");
 const credentials = require("./middleware/credentials");
 const mongoose = require("mongoose");
 const connectDB = require("./config/dbConn");
-const Conversation = require("./model/Conversation");
 const http = require("http").createServer(app);
 const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
+//Socket
+const { instrument } = require("@socket.io/admin-ui");
 const Course = require("./model/Course");
+const Conversation = require("./model/Conversation");
 const User = require("./model/User");
+
 const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
@@ -25,8 +27,6 @@ const io = require("socket.io")(http, {
     credentials: true,
   },
 });
-
-const PORT = process.env.PORT || 3500;
 
 // Connect to MongoDB
 connectDB();
@@ -84,10 +84,12 @@ app.use(errorHandler);
 
 const connection = mongoose.connection;
 
+const httpPort = 5000; // Choose the port for HTTP
+
 connection.once("open", () => {
   console.log("Connected to MongoDB");
-  http.listen(PORT, () => {
-    console.log(`HTTP server listening on port ${PORT}`);
+  http.listen(httpPort, () => {
+    console.log(`HTTP server listening on port ${httpPort}`);
   });
 });
 
