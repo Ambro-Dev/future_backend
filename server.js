@@ -1,4 +1,3 @@
-const { instrument } = require("@socket.io/admin-ui");
 require("dotenv").config();
 const express = require("express");
 const app = express();
@@ -12,19 +11,16 @@ const cookieParser = require("cookie-parser");
 const credentials = require("./middleware/credentials");
 const mongoose = require("mongoose");
 const connectDB = require("./config/dbConn");
-const Conversation = require("./model/Conversation");
 const http = require("http").createServer(app);
 const imageRoutes = require("./controllers/pictureController");
 const filesRoutes = require("./controllers/filesController");
+//Socket
+const { instrument } = require("@socket.io/admin-ui");
 const Course = require("./model/Course");
+const Conversation = require("./model/Conversation");
 const User = require("./model/User");
-const fs = require("fs");
-const https = require("https");
-const privateKey = fs.readFileSync("/path/to/private_key.pem", "utf8");
-const certificate = fs.readFileSync("/path/to/certificate.pem", "utf8");
-const credentials = { key: privateKey, cert: certificate };
-const httpsServer = https.createServer(credentials, app);
-const io = require("socket.io")(httpsServer, {
+
+const io = require("socket.io")(http, {
   cors: {
     origin: ["http://localhost:3000", "https://admin.socket.io"],
     methods: ["GET", "POST"],
@@ -89,16 +85,11 @@ app.use(errorHandler);
 const connection = mongoose.connection;
 
 const httpPort = 5000; // Choose the port for HTTP
-const httpsPort = 4443; // Choose the port for HTTPS
 
 connection.once("open", () => {
   console.log("Connected to MongoDB");
   http.listen(httpPort, () => {
     console.log(`HTTP server listening on port ${httpPort}`);
-  });
-
-  httpsServer.listen(httpsPort, () => {
-    console.log(`HTTPS server listening on port ${httpsPort}`);
   });
 });
 
